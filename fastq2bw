@@ -1,0 +1,31 @@
+#!/bin/bash
+# This script accepts various types (sra,fastq,sam,bam,sorted bam) and converts them to a bigWig
+# mapping is done based on the xenopus tropicalis xt9_0 genome
+
+
+function mapping {
+	file=$(basename $1 _1.fastq)
+	/home/jsteenbrugge/tools/hisat2-2.0.1-beta/hisat2 --very-fast  -p 12 -q -x /home/jsteenbrugge/data/genomeXenbase/index -1 $file1 $file2 -S $(basename $1 .sra).sam
+	echo "Mapping done, going to convert sam2bam..."
+	sam2bam $1
+}
+
+function  sam2bam {
+	samtools view $(basename $1 .sra).sam -bS > $(basename $1 .sra).bam
+	rm $(basename $1 .sra).sam
+	echo "sam converted to bam, going to sort the bam file now..."
+	sorting $1
+}
+
+function sorting {
+	echo samtools sort -@ 4 -m 10G $(basename $1 .sra).bam $(basename $1 .sra)_sorted
+	samtools sort -@ 4 -m 10G $(basename $1 .sra).bam $(basename $1 .sra)_sorted
+	rm $(basename $1 .sra).bam
+	echo "bam sorted, going to convert to bigwigg now..."
+}
+
+
+
+mapping $1 $2
+
+

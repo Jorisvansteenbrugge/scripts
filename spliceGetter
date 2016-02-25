@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+import sys
+import subprocess as sp
+import os
+from multiprocessing import Pool
+
+outfile = None
+
+
+def bamfile(path,base):
+        print("Converting bam file to bed file")
+        bed = base+".bed"
+        sp.call("bedtools bamtobed -bed12 -i "+path+" > "+bed, shell=True)
+        file = open(bed)
+        bedfile(file)
+
+def bedfile(file):
+	print("processing bed file")
+	[spliceFromLine(i) for i in file]
+
+
+def spliceFromLine(i):
+	global outfile
+	t ="\t"
+	line = i.split(t)
+	chr = line[0]
+	start = int(line[1])
+	stop = int(line[2])
+	blocks = int(line[9]) #aantal exons
+	bsizes = line[10] #exon lengths
+	bstarts = line[11] #exon starts relative to chromstart
+	bsizes =bsizes.split(",")#exon length as list
+	bstarts = bstarts.split(",")#exon start as list
+	for i in range(0,blocks-1,1):#moet volgens mij op 0 beginnen
+		curSize = int(bsizes[i])
+		curStart =int(bstarts[i]) 
+		spliceStart = start+ curStart                       
+		spliceEnd = spliceStart+curSize		
+    	        outfile.write(chr+t+str(spliceStart)+t+str(spliceEnd)+"\n")
+
+def parseArg():
+	global outfile	
+	base = ""
+	if len(sys.argv) == 2:
+		path =sys.argv[1]
+	if path.endswith(".bam"):
+		base = path.split(".bam")[0]
+		outfile= open(base+"_SpliceSites.bed","w")
+		bamfile(path,base)
+	elif path.endswith(".bed"):
+		file = open(path)
+		base = path.split(".bed")[0]
+		outfile= open(base+"_SpliceSites.bed","w")
+		bedfile(file)
+	else:
+		raise Exception("Provide 1 file (no more, no less)\nexample usage: spliceGetter <inputfile.[bed|bam]> header=[True|False]")
+	makeUniq(base)
+	
+def makeUniq(base):
+	print("Counting splice sites..")
+	sp.call("sc "+base+"_SpliceSites.bed > "+base+"_SpliceCounted.bed",shell=True)
+	sp.call("rm "+base+"_SpliceSites.bed",shell=True)
+
+if __name__ == "__main__": 
+	parseArg()
+	print("Done!")
