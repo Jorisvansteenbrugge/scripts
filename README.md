@@ -1,3 +1,3 @@
 # scripts
 
-Scripts contains some various small programs i wrote for various purposes
+Scripts contains some various small programs I wrote for various purposes
