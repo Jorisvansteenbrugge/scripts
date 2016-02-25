@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+import os
+import sys
+import argparse
+import subprocess as sp
+import glob
+
+def parseArg():
+	p = argparse.ArgumentParser()
+	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
+	p.add_argument("-i", dest="pitabed", help="bedfile produced by pita", required=True)
+	p.add_argument("-q", dest="score", help="Peak calling q score",required=False)
+	p.add_argument("-o", dest="output", help="Provide an output bedfile name", required=True)
+	p.add_argument("-b", dest="boundary", help=" + and - boundary for the 'overlap'", required=False)
+	args = p.parse_args()
+
+	qscore =""
+	if not args.score:
+		qscore = "0.05"
+	else:
+		qscore = args.score
+	dir =  args.directory
+	pitabed = args.pitabed
+	output = args.output
+	boundary = args.boundary
+	return dir,pitabed,qscore,output, boundary
+
+"""Method takes all bam files in the folder and converts them to bed.
+Then sorts, then merges them"""
+def convert2bed(dir):
+	os.chdir(dir)
+	for file in glob.glob("*q0_01_peaks.bed"):
+		sp.call("cat "+file+" >> H3K4_unsorted.bed", shell=True)
+	sp.call("bedtools sort -i H3K4_unsorted.bed > H3K4_sorted.bed", shell=True)
+	sp.call("bedtools merge -i H3K4_sorted.bed > H3K4_allPeaks.bed", shell=True)
+	sp.call("rm H3K4_unsorted.bed H3K4_sorted.bed *_peaks_*", shell=True) #always cleanup :)
+
+"""Calls peaks on the bam files in the directory. Uses the quality score provided"""
+def peakCall(dir,qscore):
+	os.chdir(dir)
+	for file in glob.glob("*.bam"):
+		basename = file.split(".bam")[0]
+		sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
+
+def intersection(dir, pitabed,output):
+	os.chdir(dir)
+	sp.call("echo 'track name='"+str(output)+" > "+str(output)+".bed", shell=True)
+	sp.call("bedtools intersect -u -wa -a "+pitabed+" -b H3K4_allPeaks.bed >> "+output+".bed", shell=True)
+
+def bleedingIntersection(dir,pitabed, output, boundary):
+	os.chdir(dir)
+	pita = str(pitabed)
+	out = open(output+".bed","w")
+	ranges = []
+	map = {}
+	count=0
+	out.write("track name="+output+"\n")
+	with open('H3K4_allPeaks.bed') as f:
+    		for line in f:
+			line=line.replace("\n","").split("\t")
+			if int(line[2]) - int(line[1]) >=400:
+				l =[int(line[1]),int(line[2])]
+				ranges.append(l)
+	with open(pitabed) as f:
+		for line in f:
+			line = line.replace("\n","").split("\t")
+			start = int(line[1])-int(boundary)
+			stop = int(line[2])+int(boundary)
+			for i in ranges:
+				if (start <= i[0] <= stop) or (start <= i[1] <= stop):
+					out.write("\t".join(line))
+					out.write("\n")
+	out.close()
+
+if __name__ == "__main__":
+	dir, pitabed, qscore, output,boundary = parseArg()
+	try:
+                check = os.chdir(dir)
+        except OSError:
+                sys.exit()
+	peakCall(dir,qscore)
+	convert2bed(dir)
+	intersection(dir, pitabed, output)
+	#bleedingIntersection(dir,pitabed,output, boundary)
