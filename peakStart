@@ -56,7 +56,7 @@ def bleedingIntersection(dir,pitabed, output, boundary):
 	count=0
 	out.write("track name="+output+"\n")
 	with open('H3K4_allPeaks.bed') as f:
-    		for line in f:
+		for line in f:
 			line=line.replace("\n","").split("\t")
 			if int(line[2]) - int(line[1]) >=400:
 				l =[int(line[1]),int(line[2])]
