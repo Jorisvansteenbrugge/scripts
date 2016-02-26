@@ -3,9 +3,9 @@
 #Author: Joris van Steenbrugge
 #Date: februari 2016
 #Function: Auto creates a yaml file with all the data files included for the pita pipeline to run
-
 #Missing:
 #	guided mode
+
 import os
 import sys
 import argparse
@@ -22,6 +22,7 @@ cwd = os.getcwd()
 def parseArgs():
 	global path
 	p = argparse.ArgumentParser()
+	p.add_argument("-maxent", dest="maxent", help="Directory of the maxent source files",required=True)
 	p.add_argument("-methy", dest="h3k4me3", help="Directory with H3K4me3 bam files", required=False)
 	p.add_argument("-rna", dest="rna", help="Directory with RNA-seq bam files", required=False)
 	p.add_argument("-spl", dest="splice", help="Directory with splice site files", required=False)
@@ -29,16 +30,15 @@ def parseArgs():
 	p.add_argument("-model", dest="model", help="Gene model file(s). This includes annotation files that don't fit in other categories", nargs="+", required=False)
 	p.add_argument("-guided", dest="guided",help="Guided mode will enable you to add data folders at run-time without the use of additional flags. DEFAULT=False")
 	p.add_argument("-o", dest="output",help="Output file (requires a full path for some reason)", required=True)
-
 	args = p.parse_args()
-
+	
 	h3k4me3Dir = args.h3k4me3
 	rnaDir = args.rna
 	output = args.output
 	splice = args.splice
-	est= args.est
+	est = args.est
 	model = args.model
-
+	maxent = args.maxent
 	dirs = []
 
 
@@ -71,7 +71,7 @@ def parseArgs():
 	if splice:
 		addDataEntry("RNAseq_splice" ,splice,"splice")
 
-	return output
+	return output, maxent
 
 def addDataEntry(name, dir, feature):
 	entry= {}
@@ -85,12 +85,13 @@ def addDataEntry(name, dir, feature):
 	addScoring(name,feature)
 
 def addAnnotationEntry(name,fileList):
-	entry ={}
-	type = raw_input("What is the filetype of "+name+"? ")
-	entry["name"] = name
-	entry["path"]= fileList
-	entry["type"] = type
-	annotation.append(entry)
+	for i,path in enumerate(fileList):
+		entry ={}
+		type = raw_input("What is the filetype of "+name+str(i)+"? ")
+		entry["name"] = name+str(i)
+		entry["path"]= path
+		entry["type"] = type
+		annotation.append(entry)
 
 def addScoring(name, type):
 	entry = {}
@@ -106,15 +107,17 @@ def getArray(dir, ext):
 	[list.append(dir.replace(path,"")+file) for file in glob.glob("*."+ext)]
 	return list
 
-def writeFile(output):
+def writeFile(output, maxent):
 	global path
 	global cwd
 	os.chdir(cwd)
 	file = open(str(output),"w")
 	file.write("data_path: "+path)
-	file.write("\nAnnotation:\n")
-	file.write(yaml.dump(annotation))
-	file.write("\nData:\n")
+	file.write("\ndatabase: sqlite:///pita_database.db\n")
+	file.write("maxentpath: "+maxent)
+	file.write("\nannotation:\n")
+	file.write(yaml.dump(annotation,default_flow_style=False))
+	file.write("\ndata:\n")
 	file.write(yaml.dump(data))
 	file.write("\nscoring:\n")
 	file.write(yaml.dump(scoring,default_flow_style=False))
@@ -137,6 +140,6 @@ def printReminders():
 	print("Don't forget to adjust the scoring weights to your preferences in the output file!")
 
 if __name__ == "__main__":
-	output = parseArgs()
-	writeFile(output)
+	output, maxent = parseArgs()
+	writeFile(output, maxent)
 	printReminders()
