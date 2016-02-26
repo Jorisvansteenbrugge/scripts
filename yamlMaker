@@ -17,6 +17,7 @@ data =[]
 annotation=[]
 scoring=[]
 path=""
+cwd = os.getcwd()
 
 def parseArgs():
 	global path
@@ -107,6 +108,8 @@ def getArray(dir, ext):
 
 def writeFile(output):
 	global path
+	global cwd
+	os.chdir(cwd)
 	file = open(str(output),"w")
 	file.write("data_path: "+path)
 	file.write("\nAnnotation:\n")
