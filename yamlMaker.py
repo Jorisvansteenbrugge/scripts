@@ -5,7 +5,6 @@
 #Function: Auto creates a yaml file with all the data files included for the pita pipeline to run
 
 #Missing:
-#	data_path
 #	guided mode
 import os
 import sys
