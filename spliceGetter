@@ -36,7 +36,7 @@ def spliceFromLine(i):
 		curStart =int(bstarts[i]) 
 		spliceStart = start+ curStart                       
 		spliceEnd = spliceStart+curSize		
-    	        outfile.write(chr+t+str(spliceStart)+t+str(spliceEnd)+"\n")
+		outfile.write(chr+t+str(spliceStart)+t+str(spliceEnd)+"\n")
 
 def parseArg():
 	global outfile	

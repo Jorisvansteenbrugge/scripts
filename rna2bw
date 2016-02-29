@@ -29,7 +29,6 @@ function  sam2bam {
 }
 
 function sorting {
-	echo samtools sort -@ 4 -m 10G $(basename $1 .sra).bam $(basename $1 .sra)_sorted
 	samtools sort -@ 4 -m 10G $(basename $1 .sra).bam $(basename $1 .sra)_sorted
 	rm $(basename $1 .sra).bam
 	echo "bam sorted, going to convert to bigwigg now..."

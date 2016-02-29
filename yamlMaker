@@ -42,7 +42,7 @@ def parseArgs():
 	dirs = []
 
 
-	#data entries
+	#data paths for consensus
 	if h3k4me3Dir:
 		dirs.append(h3k4me3Dir)
 	if rnaDir:
@@ -53,7 +53,7 @@ def parseArgs():
 
 	getPathconsensus(dirs)
 
-	#annotation entries
+	#add annotation entries
 	if est:
 		for i,y in enumerate(est):
 			est[i] = y.replace(path,"")
@@ -64,6 +64,7 @@ def parseArgs():
 
 		addAnnotationEntry("GModel",model)
 
+	#add data entries
 	if h3k4me3Dir:
 		addDataEntry("H3K4me3",h3k4me3Dir,"start")
 	if rnaDir:
