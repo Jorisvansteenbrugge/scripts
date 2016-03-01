@@ -7,7 +7,7 @@
 
 function sraSplit {
 	echo "Going to convert sra2fastq, ga maar alvast koffie halen..."
-	fastq-dump $1 --split-files  #-X 100 for testing
+	fastq-dump $1 --split-files  -X 100
 	mapping $1
 }
 

@@ -33,7 +33,7 @@ def convert2bed(dir):
 		sp.call("cat "+file+" >> H3K4_unsorted.bed", shell=True)
 	sp.call("bedtools sort -i H3K4_unsorted.bed > H3K4_sorted.bed", shell=True)
 	sp.call("bedtools merge -i H3K4_sorted.bed > H3K4_allPeaks.bed", shell=True)
-	sp.call("rm H3K4_unsorted.bed H3K4_sorted.bed *_peaks_*", shell=True) #always cleanup :)
+	sp.call("rm H3K4_unsorted.bed H3K4_sorted.bed *_peaks_*", shell=True)
 
 """Calls peaks on the bam files in the directory. Uses the quality score provided"""
 def peakCall(dir,qscore):
@@ -59,7 +59,7 @@ def bleedingIntersection(dir,pitabed, output, boundary):
 		for line in f:
 			line=line.replace("\n","").split("\t")
 			if int(line[2]) - int(line[1]) >=400:
-				l =[int(line[1]),int(line[2])]
+				l =[int(line[1]), int(line[2])]
 				ranges.append(l)
 	with open(pitabed) as f:
 		for line in f:

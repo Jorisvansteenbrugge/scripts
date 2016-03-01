@@ -23,8 +23,8 @@ def parseArgs():
 	global path
 	p = argparse.ArgumentParser()
 	p.add_argument("-maxent", dest="maxent", help="Directory of the maxent source files",required=True)
-	p.add_argument("-methy", dest="h3k4me3", help="Directory with H3K4me3 bam files", required=False)
-	p.add_argument("-rna", dest="rna", help="Directory with RNA-seq bam files", required=False)
+	p.add_argument("-methy", dest="h3k4me3", help="Directory with H3K4me3 bam files", nargs="+", required=False)
+	p.add_argument("-rna", dest="rna", help="Directory with RNA-seq bam files", nargs="+", required=False)
 	p.add_argument("-spl", dest="splice", help="Directory with splice site files", required=False)
 	p.add_argument("-est", dest="est", help="EST file(s)", nargs="+", required=False)
 	p.add_argument("-model", dest="model", help="Gene model file(s). This includes annotation files that don't fit in other categories", nargs="+", required=False)
@@ -44,9 +44,11 @@ def parseArgs():
 
 	#data paths for consensus
 	if h3k4me3Dir:
-		dirs.append(h3k4me3Dir)
+		for i in h3k4me3Dir:
+			dirs.append(i)
 	if rnaDir:
-		dirs.append(rnaDir)
+		for i in rnaDir:
+			dirs.append(i)
 	if splice:
 		dirs.append(splice)
 
@@ -66,9 +68,11 @@ def parseArgs():
 
 	#add data entries
 	if h3k4me3Dir:
-		addDataEntry("H3K4me3",h3k4me3Dir,"start")
+		for e,i in enumerate(h3k4me3Dir):
+			addDataEntry("H3K4me3"+str(e),i,"start")
 	if rnaDir:
-		addDataEntry("RNAseq",rnaDir,"all")
+		for e,i in enumerate(rnaDir):
+			addDataEntry("RNAseq"+str(e),i,"all")
 	if splice:
 		addDataEntry("RNAseq_splice" ,splice,"splice")
 
@@ -97,7 +101,7 @@ def addAnnotationEntry(name,fileList):
 def addScoring(name, type):
 	entry = {}
 	entry["name"] = name
-        entry["scoring"]= 1
+        entry["weight"]= 1
         entry["type"] = type
 	scoring.append(entry)
 
@@ -115,7 +119,7 @@ def writeFile(output, maxent):
 	file = open(str(output),"w")
 	file.write("data_path: "+path)
 	file.write("\ndatabase: sqlite:///pita_database.db\n")
-	file.write("maxentpath: "+maxent)
+	file.write("maxent: "+maxent)
 	file.write("\nannotation:\n")
 	file.write(yaml.dump(annotation,default_flow_style=False))
 	file.write("\ndata:\n")
