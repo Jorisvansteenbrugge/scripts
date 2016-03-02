@@ -5,13 +5,16 @@ import argparse
 import subprocess as sp
 import glob
 
+boundary =0
+
 def parseArg():
+	global boundary
 	p = argparse.ArgumentParser()
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
 	p.add_argument("-i", dest="pitabed", help="bedfile produced by pita", required=True)
 	p.add_argument("-q", dest="score", help="Peak calling q score",required=False)
 	p.add_argument("-o", dest="output", help="Provide an output bedfile name", required=True)
-	p.add_argument("-b", dest="boundary", help=" + and - boundary for the 'overlap'", required=False)
+	p.add_argument("-b", dest="boundary", help=" + and - boundaries for the 'overlap'", required=False)
 	args = p.parse_args()
 
 	qscore =""
@@ -44,9 +47,28 @@ def peakCall(dir,qscore):
 
 def intersection(dir, pitabed,output):
 	os.chdir(dir)
-	sp.call("echo 'track name='"+str(output)+" > "+str(output)+".bed", shell=True)
-	sp.call("bedtools intersect -u -wa -a "+pitabed+" -b H3K4_allPeaks.bed >> "+output+".bed", shell=True)
+	pitabed = transformBed(pitabed)
+	sp.call("echo 'track name='"+str(output) +" > "+str(output)+".bed", shell=True)
+	sp.call("bedtools intersect  -wa -a "+pitabed+" -b H3K4_allPeaks.bed >> "+output+".bed", shell=True)
 
+def transformBed(file):
+	global boundary
+	infile = open(file)
+	outname = "supersecretfile.bed"
+	outfile = open(outname,"w")
+	for i in infile:
+		line = i.strip().split("\t")
+		if len(line) >= 10:
+			line[2] = str(int(line[1])+int(boundary))
+			line[1] = str(int(line[1])-int(boundary))
+
+			#line[6] = str(int(line[6])-int(boundary))
+			line[7] = str(int(line[7])-int(boundary))
+			outfile.write("\t".join(line)+"\n")
+		else:
+			print(line)
+	outfile.close()
+	return outname
 def bleedingIntersection(dir,pitabed, output, boundary):
 	os.chdir(dir)
 	pita = str(pitabed)
@@ -58,18 +80,23 @@ def bleedingIntersection(dir,pitabed, output, boundary):
 	with open('H3K4_allPeaks.bed') as f:
 		for line in f:
 			line=line.replace("\n","").split("\t")
-			if int(line[2]) - int(line[1]) >=400:
-				l =[int(line[1]), int(line[2])]
-				ranges.append(l)
+			l =[int(line[1]), int(line[2])]
+			ranges.append(l)
 	with open(pitabed) as f:
 		for line in f:
-			line = line.replace("\n","").split("\t")
-			start = int(line[1])-int(boundary)
-			stop = int(line[2])+int(boundary)
-			for i in ranges:
-				if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-					out.write("\t".join(line))
-					out.write("\n")
+			try:
+				line = line.replace("\n","").split("\t")
+				start = int(line[1])-int(boundary)
+				stop = int(line[2])+int(boundary)
+				print(str(start)+"\t"+str(stop))
+				for i in ranges:
+					if (start <= i[0] <= stop) or (start <= i[1] <= stop):
+						print("yes sir")
+						out.write("\t".join(line))
+						out.write("\n")
+			except IndexError:
+				print("passed")
+				pass
 	out.close()
 
 if __name__ == "__main__":
@@ -82,3 +109,4 @@ if __name__ == "__main__":
 	convert2bed(dir)
 	intersection(dir, pitabed, output)
 	#bleedingIntersection(dir,pitabed,output, boundary)
+
