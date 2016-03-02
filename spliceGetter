@@ -41,6 +41,7 @@ def spliceFromLine(i):
 def parseArg():
 	global outfile	
 	base = ""
+	path=""
 	if len(sys.argv) == 2:
 		path =sys.argv[1]
 	if path.endswith(".bam"):

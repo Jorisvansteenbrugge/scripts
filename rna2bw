@@ -7,14 +7,14 @@
 
 function sraSplit {
 	echo "Going to convert sra2fastq, ga maar alvast koffie halen..."
-	fastq-dump $1 --split-files  -X 100
+	fastq-dump $1 --split-files # -X 100
 	mapping $1
 }
 
 function mapping {
 	file1=$(basename $1 .sra)_1.fastq
 	file2=$(basename $1 .sra)_2.fastq
-	/home/jsteenbrugge/tools/hisat2-2.0.1-beta/hisat2 --very-fast  -p 16 -q -x /home/jsteenbrugge/data/genomeXenbase/index -1 $file1 $file2 -S $(basename $1 .sra).sam
+	/home/jsteenbrugge/tools/hisat2-2.0.1-beta/hisat2 --very-fast  -p 12 -q -x /home/jsteenbrugge/data/genomeXenbase/index -1 $file1 $file2 -S $(basename $1 .sra).sam
 	rm $file1
 	rm $file2
 	echo "Mapping done, going to convert sam2bam..."
@@ -32,7 +32,7 @@ function sorting {
 	samtools sort -@ 4 -m 10G $(basename $1 .sra).bam $(basename $1 .sra)_sorted
 	rm $(basename $1 .sra).bam
 	echo "bam sorted, going to convert to bigwigg now..."
-	bamTobw $1
+	#bamTobw $1
 }
 
 function bamTobw {
@@ -40,9 +40,7 @@ function bamTobw {
 	echo "---finished---"
 }
 
-function test {
-	echo "test"
-}
+
 
 if [[ "$1" == *".sra"* ]]
 then
