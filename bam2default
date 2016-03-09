@@ -1,0 +1,5 @@
+#!/bin/bash 
+
+outf=$(basename $1 .bam).sam
+samtools view -H -> $outf
+samtools view $1 | ~/tools/bioawk-master/bioawk -t '{$10="*";$11="*";print}' >> $outf
