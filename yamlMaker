@@ -1,163 +1,66 @@
 #!/usr/bin/env python
 
-#Author: Joris van Steenbrugge
-#Date: februari 2016
-#Function: Auto creates a yaml file with all the data files included for the pita pipeline to run
-#Missing:
-#	guided mode
-
-import os
-import sys
-import argparse
-import subprocess as sp
-import glob
 import yaml
+import re
+import glob
+import os
 
-data =[]
-annotation=[]
-scoring=[]
-output=""
-maxent=""
-path=""
-cwd = os.getcwd()
-
-def parseArgs():
-	global path
-        global output
-        global maxent
-	p = argparse.ArgumentParser()
-	p.add_argument("-maxent", dest="maxent", help="Directory of the maxentcan source files",required=True)
-	p.add_argument("-methy", dest="h3k4me3", help="Directory with H3K4me3 bam files", nargs="+", required=False)
-	p.add_argument("-rna", dest="rna", help="Directory with RNA-seq bam files", nargs="+", required=False)
-	p.add_argument("-spl", dest="splice", help="Directory with splice site files", required=False)
-	p.add_argument("-est", dest="est", help="EST file(s)", nargs="+", required=False)
-	p.add_argument("-model", dest="model", help="Gene model file(s). This includes annotation files that don't fit in other categories", nargs="+", required=False)
-	p.add_argument("-guided", dest="guided",help="Guided mode will enable you to add data folders at run-time without the use of additional flags. DEFAULT=False")
-	p.add_argument("-o", dest="output",help="Output file (requires a full path for some reason)", required=True)
-	args = p.parse_args()
-	
-	h3k4me3Dir = args.h3k4me3
-	rnaDir = args.rna
-	output = args.output
-	splice = args.splice
-	est = args.est
-	model = args.model
-	maxent = args.maxent
-	dirs = []
+datalist=[]
+annolist=[]
 
 
-	#data paths for consensus
-	if h3k4me3Dir:
-		for i in h3k4me3Dir:
-			dirs.append(i)
-	if rnaDir:
-		for i in rnaDir:
-			dirs.append(i)
-	if splice:
-		dirs.append(splice)
 
+def createObjects():
+    global datalist
+    global annolist
 
-	getPathconsensus(dirs)
+    ask = True
+    while ask:
+        entryType = raw_input("Annotation or Data entry (a/d) ")
+        entry = {}
+        entry["name"] = raw_input("Name: ")
+        entry["path"] = getFiles(raw_input("Path: "))
+        if entryType =='d':
+            entry["feature"] = raw_input("Data feature (first/rpkm/etc.): ")
+            if raw_input("chipseq? (y/n) :") == 'y':
+                entry["up"] = 1000
+                entry["down"] = 1000
 
-	#add annotation entries
-	if est:
-		for i,y in enumerate(est):
-			est[i] = y.replace(path,"")
-		addAnnotationEntry("EST",est)
-	if model:
-		for i,y in enumerate(model):
-			model[i] = y.replace(path,"")
+            datalist.append(entry)
+        else:
+            entry["type"] = raw_input("Type: ")
+            annolist.append(entry)
+        ask = contin()
+        print(entry)
 
-		addAnnotationEntry("GModel",model)
+def getFiles(path):
+    m = re.search(r'\.[a-z]{3}$', path)
+    if m: #anno entry
+        return path
+    else: #data entry
+        return parseFolder(path)
 
-	#add data entries
-	if h3k4me3Dir:
-		for e,i in enumerate(h3k4me3Dir):
-			addDataEntry("H3K4me3"+str(e),i,"start",True)
-	if rnaDir:
-		for e,i in enumerate(rnaDir):
-			addDataEntry("RNAseq"+str(e),i,"all")
-	if splice:
-		addDataEntry("RNAseq_splice" ,splice,"splice")
+def parseFolder(path):
+    os.chdir(path)
+    files = []
+    [files.append(file) for file in glob.glob("*.bam")]
+    return files
 
-	return output, maxent
+def contin():
+    answ = raw_input("Another entry? (y/n) ")
+    if answ == 'y':
+        return True
+    else:
+        return False
 
-def addDataEntry(name, dir, feature, chip=False):
-	entry= {}
-	type = raw_input("What is the filetype of "+name+"? ")
-	fileList = getArray(dir, type)
-	entry["name"] = name
-	entry["path"] = fileList
-	entry["type"] = type
-	entry["feature"] = feature
+def writeObjects():
+    print("annotation:\n")
+    print(yaml.dump(annolist, default_flow_style=False))
+    print("\ndata:\n")
+    print(yaml.dump(datalist))
 
-	if chip:
-		entry["up"] = 2000
-		entry["down"] = 2000
-		feature="first" # for the scoring section
-	else:
-		feature="total_rpkm"
-	data.append(entry)
-	addScoring(name,feature)
+def main():
+    createObjects()
+    writeObjects()
 
-def addAnnotationEntry(name,fileList):
-	for i,path in enumerate(fileList):
-		entry ={}
-		type = raw_input("What is the filetype of "+name+str(i)+"? ")
-		entry["name"] = name+str(i)
-		entry["path"]= path
-		entry["type"] = type
-		annotation.append(entry)
-
-def addScoring(name, type):
-	entry = {}
-	entry["name"] = name
-        entry["weight"]= 1
-        entry["type"] = type
-	scoring.append(entry)
-
-def getArray(dir, ext):
-	global path
-	os.chdir(dir)
-	list = []
-	[list.append(dir.replace(path,"")+file) for file in glob.glob("*."+ext)]
-	return list
-
-def writeFile(output, maxent):
-	global path
-	global cwd
-        global maxent
-        global output
-	os.chdir(cwd)
-	file = open(str(output),"w")
-	file.write("data_path: "+path)
-	file.write("\ndatabase: sqlite:///pita_database.db\n")
-	file.write("maxent: "+maxent)
-	file.write("\nannotation:\n")
-	file.write(yaml.dump(annotation,default_flow_style=False))
-	file.write("\ndata:\n")
-	file.write(yaml.dump(data))
-	file.write("\nscoring:\n")
-	file.write(yaml.dump(scoring,default_flow_style=False))
-
-def getPathconsensus(dirs):
-	global path
-	while len(dirs) >=2:
-		v = commonStart(dirs[0],dirs[1])
-		dirs[0] = v
-		dirs.pop(1)
-	path = dirs[0]
-
-def stopIter():
-    raise StopIteration
-
-def commonStart(sa, sb):
-	return ''.join(a if a == b else stopIter() for a, b in zip(sa, sb))
-
-def printReminders():
-	print("Don't forget to adjust the scoring weights to your preferences in the output file!")
-
-if __name__ == "__main__":
-	parseArgs()
-	writeFile()
-	printReminders()
+main()
