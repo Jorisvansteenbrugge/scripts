@@ -90,6 +90,9 @@ def addDataEntry(name, dir, feature, chip=False):
 	if chip:
 		entry["up"] = 2000
 		entry["down"] = 2000
+		feature="first" # for the scoring section
+	else:
+		feature="total_rpkm"
 	data.append(entry)
 	addScoring(name,feature)
 
