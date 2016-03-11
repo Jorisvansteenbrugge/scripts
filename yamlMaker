@@ -16,13 +16,17 @@ import yaml
 data =[]
 annotation=[]
 scoring=[]
+output=""
+maxent=""
 path=""
 cwd = os.getcwd()
 
 def parseArgs():
 	global path
+        global output
+        global maxent
 	p = argparse.ArgumentParser()
-	p.add_argument("-maxent", dest="maxent", help="Directory of the maxent source files",required=True)
+	p.add_argument("-maxent", dest="maxent", help="Directory of the maxentcan source files",required=True)
 	p.add_argument("-methy", dest="h3k4me3", help="Directory with H3K4me3 bam files", nargs="+", required=False)
 	p.add_argument("-rna", dest="rna", help="Directory with RNA-seq bam files", nargs="+", required=False)
 	p.add_argument("-spl", dest="splice", help="Directory with splice site files", required=False)
@@ -122,6 +126,8 @@ def getArray(dir, ext):
 def writeFile(output, maxent):
 	global path
 	global cwd
+        global maxent
+        global output
 	os.chdir(cwd)
 	file = open(str(output),"w")
 	file.write("data_path: "+path)
@@ -152,6 +158,6 @@ def printReminders():
 	print("Don't forget to adjust the scoring weights to your preferences in the output file!")
 
 if __name__ == "__main__":
-	output, maxent = parseArgs()
-	writeFile(output, maxent)
+	parseArgs()
+	writeFile()
 	printReminders()
