@@ -39,8 +39,7 @@ def createObjects():
             entry["type"] = raw_input("Type: ")
             annolist.append(entry)
         ask = contin()
-        cls()
-    print(paths)    
+        cls()        
     return getPathconsensus(paths)
 
 def getPathconsensus(dirs):
