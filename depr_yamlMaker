@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+""" This script has been replaced by the new yamlMaker script"""
+
 #Author: Joris van Steenbrugge
 #Date: februari 2016
 #Function: Auto creates a yaml file with all the data files included for the pita pipeline to run
