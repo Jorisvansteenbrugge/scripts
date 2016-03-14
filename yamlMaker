@@ -2,7 +2,7 @@
 
 import yaml
 import re
-import glob
+import glob, readline
 import os
 
 datalist=[]
@@ -19,7 +19,7 @@ def createObjects():
         entryType = raw_input("Annotation or Data entry (a/d) ")
         entry = {}
         entry["name"] = raw_input("Name: ")
-        entry["path"] = getFiles(raw_input("Path: "))
+        entry["path"] = getFiles(getPath())
         if entryType =='d':
             entry["feature"] = raw_input("Data feature (first/rpkm/etc.): ")
             if raw_input("chipseq? (y/n) :") == 'y':
@@ -31,7 +31,14 @@ def createObjects():
             entry["type"] = raw_input("Type: ")
             annolist.append(entry)
         ask = contin()
-        print(entry)
+        cls()
+        
+
+def getPath():
+    readline.set_completer_delims(' \t\n;')
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer(complete)
+    return raw_input("Path: ")
 
 def getFiles(path):
     m = re.search(r'\.[a-z]{3}$', path)
@@ -39,6 +46,12 @@ def getFiles(path):
         return path
     else: #data entry
         return parseFolder(path)
+
+def complete(text, state):
+    return (glob.glob(text+'*')+[None])[state]
+
+def cls():
+    os.system('cls' if os.name=='nt' else 'clear')
 
 def parseFolder(path):
     os.chdir(path)
