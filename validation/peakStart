@@ -87,7 +87,7 @@ def bleedingIntersection(dir,pitabed, output, boundary):
 			try:
 				line = line.replace("\n","").split("\t")
 				start = int(line[1])-int(boundary)
-				stop = int(line[2])+int(boundary)
+				stop = int(line[1])+int(boundary)
 				print(str(start)+"\t"+str(stop))
 				for i in ranges:
 					if (start <= i[0] <= stop) or (start <= i[1] <= stop):
