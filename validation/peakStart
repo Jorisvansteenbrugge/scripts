@@ -45,11 +45,12 @@ def convert2bed(dir):
 def peakCall(dir,qscore):
 	os.chdir(dir)
 	if os.path.isfile("H3K4_allPeaks.bed"):
-		return
+		return True
 	else:
 		for file in glob.glob("*.bam"):
 			basename = file.split(".bam")[0]
 			sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
+		return False
 
 def intersection(dir, pitabed,output):
 	os.chdir(dir)
@@ -57,24 +58,6 @@ def intersection(dir, pitabed,output):
 	sp.call("echo 'track name='"+str(output) +" > "+str(output)+".bed", shell=True)
 	sp.call("bedtools intersect  -wa -a "+pitabed+" -b H3K4_allPeaks.bed >> "+output+".bed", shell=True)
 
-def transformBed(file):
-	global boundary
-	infile = open(file)
-	outname = "supersecretfile.bed"
-	outfile = open(outname,"w")
-	for i in infile:
-		line = i.strip().split("\t")
-		if len(line) >= 10:
-			line[2] = str(int(line[1])+int(boundary))
-			line[1] = str(int(line[1])-int(boundary))
-
-			#line[6] = str(int(line[6])-int(boundary))
-			line[7] = str(int(line[7])-int(boundary))
-			outfile.write("\t".join(line)+"\n")
-		else:
-			print(line)
-	outfile.close()
-	return outname
 def bleedingIntersection(dir,pitabed, output, boundary):
 	os.chdir(dir)
 	pita = str(pitabed)
@@ -112,7 +95,10 @@ if __name__ == "__main__":
         except OSError:
                 sys.exit()
 	skip = peakCall(dir,qscore)
-	convert2bed(dir)
+	if skip:
+		pass
+	else:
+		convert2bed(dir)
 	#intersection(dir, pitabed, output)
 	bleedingIntersection(dir,pitabed,output, boundary)
 
