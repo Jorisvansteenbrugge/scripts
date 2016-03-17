@@ -25,7 +25,10 @@ def parseArg():
 	dir =  args.directory
 	pitabed = args.pitabed
 	output = args.output
-	boundary = args.boundary
+	if not args.boundary:
+		boundary = 1000
+	else:
+		boundary = args.boundary
 	return dir,pitabed,qscore,output, boundary
 
 """Method takes all bam files in the folder and converts them to bed.
@@ -41,9 +44,12 @@ def convert2bed(dir):
 """Calls peaks on the bam files in the directory. Uses the quality score provided"""
 def peakCall(dir,qscore):
 	os.chdir(dir)
-	for file in glob.glob("*.bam"):
-		basename = file.split(".bam")[0]
-		sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
+	if os.path.isfile("H3K4_allPeaks.bed"):
+		return
+	else:
+		for file in glob.glob("*.bam"):
+			basename = file.split(".bam")[0]
+			sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
 
 def intersection(dir, pitabed,output):
 	os.chdir(dir)
@@ -105,8 +111,9 @@ if __name__ == "__main__":
                 check = os.chdir(dir)
         except OSError:
                 sys.exit()
-	peakCall(dir,qscore)
+	skip = peakCall(dir,qscore)
 	convert2bed(dir)
-	intersection(dir, pitabed, output)
-	#bleedingIntersection(dir,pitabed,output, boundary)
+	#intersection(dir, pitabed, output)
+	bleedingIntersection(dir,pitabed,output, boundary)
+
 
