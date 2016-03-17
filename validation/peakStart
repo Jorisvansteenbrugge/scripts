@@ -11,7 +11,7 @@ def parseArg():
 	global boundary
 	p = argparse.ArgumentParser()
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
-	p.add_argument("-i", dest="pitabed", help="bedfile produced by pita", required=True)
+	p.add_argument("-i", dest="bedFile", help="bedfile produced by pita", required=True)
 	p.add_argument("-q", dest="score", help="Peak calling q score",required=False)
 	p.add_argument("-o", dest="output", help="Provide an output bedfile name", required=True)
 	p.add_argument("-b", dest="boundary", help=" + and - boundaries for the 'overlap'", required=False)
@@ -23,13 +23,13 @@ def parseArg():
 	else:
 		qscore = args.score
 	dir =  args.directory
-	pitabed = args.pitabed
+	bedFile = args.bedFile
 	output = args.output
 	if not args.boundary:
 		boundary = 1000
 	else:
 		boundary = args.boundary
-	return dir,pitabed,qscore,output, boundary
+	return dir,bedFile,qscore,output, boundary
 
 """Method takes all bam files in the folder and converts them to bed.
 Then sorts, then merges them"""
@@ -40,7 +40,6 @@ def convert2bed(dir):
 	sp.call("bedtools sort -i H3K4_unsorted.bed > H3K4_sorted.bed", shell=True)
 	sp.call("bedtools merge -i H3K4_sorted.bed > H3K4_allPeaks.bed", shell=True)
 	sp.call("rm H3K4_unsorted.bed H3K4_sorted.bed *_peaks_*", shell=True)
-
 """Calls peaks on the bam files in the directory. Uses the quality score provided"""
 def peakCall(dir,qscore):
 	os.chdir(dir)
@@ -52,44 +51,35 @@ def peakCall(dir,qscore):
 			sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
 		return False
 
-def intersection(dir, pitabed,output):
+def bleedingIntersection(dir,bedFile, output, boundary):
 	os.chdir(dir)
-	pitabed = transformBed(pitabed)
-	sp.call("echo 'track name='"+str(output) +" > "+str(output)+".bed", shell=True)
-	sp.call("bedtools intersect  -wa -a "+pitabed+" -b H3K4_allPeaks.bed >> "+output+".bed", shell=True)
-
-def bleedingIntersection(dir,pitabed, output, boundary):
-	os.chdir(dir)
-	pita = str(pitabed)
-	out = open(output+".bed","w")
+	pita = str(bedFile)
+	out = open(output,"w")
 	ranges = []
 	map = {}
 	count=0
-	out.write("track name="+output+"\n")
 	with open('H3K4_allPeaks.bed') as f:
 		for line in f:
 			line=line.replace("\n","").split("\t")
 			l =[int(line[1]), int(line[2])]
 			ranges.append(l)
-	with open(pitabed) as f:
+	with open(bedFile) as f:
 		for line in f:
 			try:
 				line = line.replace("\n","").split("\t")
 				start = int(line[1])-int(boundary)
 				stop = int(line[1])+int(boundary)
-				print(str(start)+"\t"+str(stop))
 				for i in ranges:
 					if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-						print("yes sir")
 						out.write("\t".join(line))
 						out.write("\n")
 			except IndexError:
 				print("passed")
 				pass
-	out.close()
+		out.close()
 
 if __name__ == "__main__":
-	dir, pitabed, qscore, output,boundary = parseArg()
+	dir, bedFile, qscore, output,boundary = parseArg()
 	try:
                 check = os.chdir(dir)
         except OSError:
@@ -99,7 +89,6 @@ if __name__ == "__main__":
 		pass
 	else:
 		convert2bed(dir)
-	#intersection(dir, pitabed, output)
-	bleedingIntersection(dir,pitabed,output, boundary)
+	bleedingIntersection(dir,bedFile,output, boundary)
 
 

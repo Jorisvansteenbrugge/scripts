@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn
+
+
+def plot(names, values):
+	y_pos = np.arange(len(names))
+	plt.bar(y_pos, values, align='center', alpha = 0.8)
+	plt.xticks(y_pos, names)
+	plt.ylabel('H3K4me3 genes')
+	plt.title('H3K4me3 genes per bed file')
+	plt.savefig('barplot.eps', format='eps', dpi=1000)

@@ -1,18 +1,47 @@
 #!/usr/bin/env python
-import sys
+import os
 import argparse
+import subprocess as sp
+import barPlotter as bp
 
 h3k4dir = None
 bedFiles = None
 
 def argsParse():
 	global h3k4dir, bedFiles
-
 	p = argparse.ArgumentParser()
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
-	p.add_argument("-b", dest="bedFiles",nargs="+", help="bedfile produced by pita", required=True)
+	p.add_argument("-b", dest="bedFiles", nargs="+", help="bedfiles to compare", required=True)
 	args = p.parse_args()
-
 	#retrieving the files
 	h3k4dir = args.directory
-	bedFiles = ars.bedFiles
+	bedFiles = args.bedFiles
+
+
+def calcPeaks():
+	calledFiles=[]
+	for i in bedFiles:
+		output = i.split(".bed")[0]+"_intersections.bed"
+		calledFiles.append(output)
+		sp.call("peakStart -d "+h3k4dir+" -i "+i+" -b 1000 -o "+os.path.basename(output), shell=True)
+	return calledFiles
+
+def countMatches(calledFiles):
+	names = []
+	nums = []
+	for i in calledFiles:
+		num = 0
+		with open(i) as file:
+			for line in file:
+				num+=1
+		nums.append(num)
+		names.append(os.path.basename(i))
+	bp.plot(names,nums)
+
+def main():
+	argsParse()
+	calledFiles = calcPeaks()
+	countMatches(calledFiles)
+
+if __name__ == "__main__":
+	main()
