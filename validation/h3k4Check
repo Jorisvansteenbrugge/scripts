@@ -36,12 +36,13 @@ def countMatches(calledFiles):
 				num+=1
 		nums.append(num)
 		names.append(os.path.basename(i))
-	bp.plot(names,nums)
+	bp.plot(names,nums, os.path.dirname(calledFiles[0]))
 
 def main():
 	argsParse()
 	calledFiles = calcPeaks()
 	countMatches(calledFiles)
+
 
 if __name__ == "__main__":
 	main()
