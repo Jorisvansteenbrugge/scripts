@@ -4,6 +4,7 @@ import glob
 import subprocess as sp
 
 identifier = "xXxcoveragexXx.bed"
+rpkmFiles = []
 
 def getCoverage(files,bamdir):
 	for i in files:
@@ -12,15 +13,16 @@ def getCoverage(files,bamdir):
                 coverageFile = mergeCounts(i,outfiles)
                 avgFile,totalReads = getAvgCoverage(coverageFile)
                 getRPKM(totalReads, avgFile)
-
+                cleanUp(outfiles)
+        paste()
+        
 def parseBam(bed, bamdir):
 	os.chdir(bamdir)
         outfiles = []
-	for file in ["H3K4me3_st11_ni.bam", "H3K4me3_stage10.5.bam"]: # <-- testing, right way-->  glob.glob("*.bam"):
+	for file in glob.glob("*.bam"):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
 		cmd = "bedtools coverage -abam {0} -b {1} -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
-		print(cmd)
 		sp.call(cmd, shell=True) 
         return outfiles
 
@@ -35,11 +37,6 @@ def mergeCounts(bed, outfiles):
         finalOut = bed.split(".bed")[0]+".coverage"
         pasteCMD = "paste {0} {1} > {2}".format(outname, " ".join(outfiles), finalOut)
         sp.call(pasteCMD, shell=True)
-        
-
-        #cleanup
-        clean = "rm {0}".format(" ".join(outfiles))
-        #sp.call(clean, shell=True)
     
         return finalOut
 
@@ -65,18 +62,30 @@ def getAvgCoverage(coverageFile):
         return outname, totalReads
 
 def getRPKM(totalReads, avgFile):
-        outfile = open(avgFile.split(".avgCoverage")[0]+".rpkm","w")
+        outname = avgFile.split(".avgCoverage")[0]+".rpkm"
+        outfile = open(outname,"w")
+        rpkmFiles.append(outname)
         with open(avgFile) as file:
-                outfile.write(avgFile.split(".avgCoverage")[0])
+                outfile.write(os.path.basename(avgFile).split(".avgCoverage")[0]+"\n")
                 for line in file:
                         line = line.strip().split("\t")
                         length = int(line[2]) - int(line[1])
                         cov = int(line[3])
                         rpkm = (10e9*cov)/(totalReads*length)
-                        #line[3] = str(rpkm)
-                        #outfile.write("\t".join(line)+"\n")
                         outfile.write(str(rpkm)+"\n")
+
+def paste():
+        print("RPKM files: {0}".format(" ".join(rpkmFiles)))
+        outfile = "~/boxPlotData.tsv"
+        cmd = "paste {0} > {1}".format(" ".join(rpkmFiles), outfile)
+        sp.call(cmd, shell=True)
+        plot = "Rscript ~/tools/scripts/validation/boxPlotter.R {0} {1}".format(outfile, "~/boxplot.svg")
+        sp.call(plot, shell= True)
+
+def cleanUp(outfiles):
+        clean = "rm {0}".format(" ".join(outfiles))
+        sp.call(clean, shell=True)
     
 if __name__ == "__main__":
-	files =["/home/jsteenbrugge/gmodels1-3.bed"]
+	files =["/home/jsteenbrugge/gmodels1-3.bed", "/home/jsteenbrugge/pitaRun1-3.bed"]
 	getCoverage(files, sys.argv[1])
