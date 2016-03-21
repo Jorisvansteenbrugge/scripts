@@ -40,13 +40,14 @@ def convert2bed(dir):
 	sp.call("bedtools sort -i H3K4_unsorted.bed > H3K4_sorted.bed", shell=True)
 	sp.call("bedtools merge -i H3K4_sorted.bed > H3K4_allPeaks.bed", shell=True)
 	sp.call("rm H3K4_unsorted.bed H3K4_sorted.bed *_peaks_*", shell=True)
+
 """Calls peaks on the bam files in the directory. Uses the quality score provided"""
 def peakCall(dir,qscore):
 	os.chdir(dir)
 	if os.path.isfile("H3K4_allPeaks.bed"):
 		return True
 	else:
-		for file in glob.glob("*.bam"):
+		for file in ["H3K4me3_stage9_2.bam"]: # glob.glob("*.bam"):
 			basename = file.split(".bam")[0]
 			sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
 		return False
