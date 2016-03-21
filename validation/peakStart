@@ -13,7 +13,6 @@ def parseArg():
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
 	p.add_argument("-i", dest="bedFile", help="bedfile produced by pita", required=True)
 	p.add_argument("-q", dest="score", help="Peak calling q score",required=False)
-	p.add_argument("-o", dest="output", help="Provide an output bedfile name", required=True)
 	p.add_argument("-b", dest="boundary", help=" + and - boundaries for the 'overlap'", required=False)
 	args = p.parse_args()
 
@@ -24,12 +23,11 @@ def parseArg():
 		qscore = args.score
 	dir =  args.directory
 	bedFile = args.bedFile
-	output = args.output
 	if not args.boundary:
 		boundary = 1000
 	else:
 		boundary = args.boundary
-	return dir,bedFile,qscore,output, boundary
+	return dir,bedFile,qscore, boundary
 
 """Method takes all bam files in the folder and converts them to bed.
 Then sorts, then merges them"""
@@ -48,14 +46,15 @@ def peakCall(dir,qscore):
 		return True
 	else:
 		for file in ["H3K4me3_stage9_2.bam"]: # glob.glob("*.bam"):
-			basename = file.split(".bam")[0]
+			#print("Starting peakcalling for: {0}".format(file))
+                        basename = file.split(".bam")[0]
 			sp.call("macs2 callpeak -q "+qscore+" -t "+file+" -n "+basename+"_peaks_q0_01 --nomodel --nolambda  --verbose=1", shell=True)
 		return False
 
-def bleedingIntersection(dir,bedFile, output, boundary):
+def bleedingIntersection(dir,bedFile, boundary):
+        #print("Calculating intersections between H3K4_allPeaks.bed and {0}".format(bedFile))
 	os.chdir(dir)
 	pita = str(bedFile)
-	out = open(output,"w")
 	ranges = []
 	map = {}
 	count=0
@@ -72,15 +71,14 @@ def bleedingIntersection(dir,bedFile, output, boundary):
 				stop = int(line[1])+int(boundary)
 				for i in ranges:
 					if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-						out.write("\t".join(line))
-						out.write("\n")
+						print("\t".join(line))
 			except IndexError:
-				print("passed")
+			        #print("passed")
 				pass
-		out.close()
+	
 
 if __name__ == "__main__":
-	dir, bedFile, qscore, output,boundary = parseArg()
+	dir, bedFile, qscore, boundary = parseArg()
 	try:
                 check = os.chdir(dir)
         except OSError:
@@ -90,6 +88,6 @@ if __name__ == "__main__":
 		pass
 	else:
 		convert2bed(dir)
-	bleedingIntersection(dir,bedFile,output, boundary)
+	bleedingIntersection(dir,bedFile, boundary)
 
 

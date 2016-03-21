@@ -14,39 +14,52 @@ def argsParse():
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
 	p.add_argument("-b", dest="bedFiles", nargs="+", help="bedfiles to compare", required=True)
 	args = p.parse_args()
-	#retrieving the files
+	
+        #retrieving the files
 	h3k4dir = args.directory
 	bedFiles = args.bedFiles
 
 
 def calcPeaks():
 	calledFiles=[]
+        totals = []
 	for i in bedFiles:
 		output = i.split(".bed")[0]+"_intersections.bed"
+                print(output)
 		calledFiles.append(output)
-		sp.call("peakStart -d "+h3k4dir+" -i "+i+" -b 1000 -o "+os.path.basename(output), shell=True)
-	return calledFiles
+                cmd = "peakStart -d {0}  -i {1} -b 1000 |bedtools sort -i - | bedtools merge -i - > {2}".format(h3k4dir, i, output)
+                totals.append(countLines(i))
+		sp.call(cmd, shell=True)
+	return calledFiles, totals
 
-def countMatches(calledFiles):
+def countMatches(calledFiles, totals):
 	names = []
 	nums = []
-	for i in calledFiles:
-		num = 0
-		with open(i) as file:
-			for line in file:
-				num+=1
-		nums.append(num)
+	for x, i in enumerate(calledFiles):
+                part = countLines(i)
+                percent = (part*100)/totals[x]
+                print("percent = ({0}*100)/{1}".format(part,totals[x]))
+		nums.append(percent)
 		names.append(os.path.basename(i))
+        print(nums)
+        print(names)
 	bp.plot(names,nums, os.path.dirname(calledFiles[0]))
+
+def countLines(fileName):
+        count = 0
+        with open(fileName) as file:
+            for line in file:
+                count+=1
+        return count
 
 def countCoverage():
         cv.getCoverage(bedFiles, h3k4dir)
 
 def main():
 	argsParse()
-	calledFiles = calcPeaks()
-	countMatches(calledFiles)
-	countCoverage()
+	calledFiles, totals = calcPeaks()
+	countMatches(calledFiles, totals)
+	#countCoverage()
 
 if __name__ == "__main__":
 	main()
