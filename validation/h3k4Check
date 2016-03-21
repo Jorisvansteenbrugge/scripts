@@ -59,7 +59,7 @@ def main():
 	argsParse()
 	calledFiles, totals = calcPeaks()
 	countMatches(calledFiles, totals)
-	#countCoverage()
+	countCoverage()
 
 if __name__ == "__main__":
 	main()

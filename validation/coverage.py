@@ -15,7 +15,7 @@ def getCoverage(files,bamdir):
                 getRPKM(totalReads, avgFile)
                 cleanUp(outfiles)
         paste()
-        
+
 def parseBam(bed, bamdir):
 	os.chdir(bamdir)
         outfiles = []
@@ -23,21 +23,21 @@ def parseBam(bed, bamdir):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
 		cmd = "bedtools coverage -abam {0} -b {1} -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
-		sp.call(cmd, shell=True) 
+		sp.call(cmd, shell=True)
         return outfiles
 
 def mergeCounts(bed, outfiles):
 
 	#take first collumn of bed
-        outname = bed.split(".bed")[0]+"_regions.bed"        
+        outname = bed.split(".bed")[0]+"_regions.bed"
         regionsCMD = "cat {0} | cut -f 1-3 > {1}".format(bed, outname)
 	sp.call(regionsCMD,shell=True)
-        
+
         #pasta bamfiles
         finalOut = bed.split(".bed")[0]+".coverage"
         pasteCMD = "paste {0} {1} > {2}".format(outname, " ".join(outfiles), finalOut)
         sp.call(pasteCMD, shell=True)
-    
+
         return finalOut
 
 def getAvgCoverage(coverageFile):

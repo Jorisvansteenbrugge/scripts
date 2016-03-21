@@ -4,6 +4,6 @@ library(ggplot2)
 args <- commandArgs(trailingOnly = TRUE)
 rawdata = read.table(args[1], header = TRUE, fill=TRUE)
 data = melt(rawdata)
-plot = ggplot(data, aes(x= bed files, y=RPKM per gene))+ geom_boxplot()+scale_y_log10()
+ggplot(data, aes(x= variable, y=value))+ geom_boxplot()+ xlab("Annotation files") + ylab("RPKM for each gene") +scale_y_continuous(breaks = round(seq(0, 40, by= 2),1))
 
-ggsave(filename = args[2], dpi = 1200, scale = 2)
+ggsave(filename = args[2], dpi = 1200)
