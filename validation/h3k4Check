@@ -3,6 +3,7 @@ import os
 import argparse
 import subprocess as sp
 import barPlotter as bp
+import coverage as cv
 
 h3k4dir = None
 bedFiles = None
@@ -38,11 +39,14 @@ def countMatches(calledFiles):
 		names.append(os.path.basename(i))
 	bp.plot(names,nums, os.path.dirname(calledFiles[0]))
 
+def countCoverage():
+        cv.getCoverage(bedFiles, h3k4dir)
+
 def main():
 	argsParse()
 	calledFiles = calcPeaks()
 	countMatches(calledFiles)
-
+	countCoverage()
 
 if __name__ == "__main__":
 	main()

@@ -19,7 +19,7 @@ def getCoverage(files,bamdir):
 def parseBam(bed, bamdir):
 	os.chdir(bamdir)
         outfiles = []
-	for file in glob.glob("*.bam"):
+	for file in ["H3K4me3_stage9_2.bam"]: #glob.glob("*.bam"):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
 		cmd = "bedtools coverage -abam {0} -b {1} -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
