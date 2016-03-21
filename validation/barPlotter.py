@@ -14,6 +14,8 @@ def plot(names, values, dir):
         y_pos = np.arange(len(names))
 	plt.bar(y_pos, values, align='center', alpha = 0.8)
 	plt.xticks(y_pos, names)
+        axes = plt.gca()
+        axes.set_ylim([0,100])
 	plt.ylabel('% of genes with H3K4me3 peak start')
 	plt.title('H3K4me3 genes per annotation')
 	plt.savefig('barplot.svg', format='svg', dpi=1200)
