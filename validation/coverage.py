@@ -22,7 +22,7 @@ def parseBam(bed, bamdir):
 	for file in ["H3K4me3_stage9_2.bam"]: #glob.glob("*.bam"):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
-		cmd = "bedtools coverage -abam {0} -b {1} -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
+		cmd = "bedtools coverage -abam {0} -b {1}  -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
 		sp.call(cmd, shell=True)
         return outfiles
 
@@ -50,9 +50,17 @@ def getAvgCoverage(coverageFile):
                         line = line.strip().split("\t")
                         pos = line[0:3]
                         cov = line[3:]
+			nums = []
                         for i,y in enumerate(cov):
-                                cov[i] = int(y)
-                        avg = sum(cov)/len(cov)
+                                try:
+					nums.append(int(y))
+				except:
+					pass
+			avg = None
+                        try:
+				avg = sum(nums)/len(nums)
+			except:
+				avg = 0
                         totalReads += avg
                         pos.append(str(avg))
                         outfile.write("\t".join(pos)+"\n")
@@ -68,10 +76,14 @@ def getRPKM(totalReads, avgFile):
         with open(avgFile) as file:
                 outfile.write(os.path.basename(avgFile).split(".avgCoverage")[0]+"\n")
                 for line in file:
+			rpkm = 0
                         line = line.strip().split("\t")
                         length = int(line[2]) - int(line[1])
-                        cov = int(line[3])
-                        rpkm = (10e9*cov)/(totalReads*length)
+			try:
+				cov = int(line[3])
+				rpkm = (10e9*cov)/(totalReads*length)
+			except:
+				print(line)
                         outfile.write(str(rpkm)+"\n")
 
 def paste():

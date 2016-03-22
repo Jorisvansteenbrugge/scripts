@@ -14,7 +14,7 @@ def argsParse():
 	p.add_argument("-d", dest="directory", help="Directory with H3K4me3 bam files", required=True)
 	p.add_argument("-b", dest="bedFiles", nargs="+", help="bedfiles to compare", required=True)
 	args = p.parse_args()
-	
+
         #retrieving the files
 	h3k4dir = args.directory
 	bedFiles = args.bedFiles
