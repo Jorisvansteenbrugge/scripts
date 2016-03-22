@@ -18,7 +18,7 @@ def plot(names, values, dir):
     plt.gcf().subplots_adjust(left=0.2)
     plt.xlabel('% of genes with H3K4me3 peak start')
     plt.title('H3K4me3 genes per annotation')
-    plt.savefig('barplot.svg', format='svg', dpi=1200)
+    plt.savefig('/home/joris/barplot.svg', format='svg', dpi=1200)
 
 
 def cleanNames(names):

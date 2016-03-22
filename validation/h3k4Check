@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import os
 import argparse
+import pandas as pd
 import subprocess as sp
 import barPlotter as bp
+import boxPlotter as box
 import coverage as cv
 
 h3k4dir = None
@@ -38,7 +40,6 @@ def countMatches(calledFiles, totals):
 	for x, i in enumerate(calledFiles):
                 part = countLines(i)
                 percent = (part*100)/totals[x]
-                print("percent = ({0}*100)/{1}".format(part,totals[x]))
 		nums.append(percent)
 		names.append(os.path.basename(i))
         print(nums)
@@ -52,14 +53,15 @@ def countLines(fileName):
                 count+=1
         return count
 
-def countCoverage():
-        cv.getCoverage(bedFiles, h3k4dir)
+def plotCoverage():
+        plotFrame = cv.getCoverage(bedFiles, h3k4dir)
+	box.plot(plotFrame)
 
 def main():
 	argsParse()
 	calledFiles, totals = calcPeaks()
 	countMatches(calledFiles, totals)
-	countCoverage()
+	plotCoverage()
 
 if __name__ == "__main__":
 	main()
