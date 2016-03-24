@@ -2,7 +2,7 @@ import subprocess as sp
 import sys
 
 # intersectBed -wao -a bed1 -b bed2 > intersections
-header = "gene\tstartA\tstartB\tstopA\tstopB\texon#A\texon#B\texonLenA\texonLenB\toverlap\texonSame"
+header = "gene\tstartA\tstartB\tstopA\tstopB\texon#A\texon#B\texonLenA\texonLenB\toverlap"
 
 def bleedingedge():
 	bed1 = None

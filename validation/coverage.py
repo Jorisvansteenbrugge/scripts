@@ -79,16 +79,15 @@ def getRPKM(totalReads, avgFile):
         with open(avgFile) as file:
                 outfile.write(os.path.basename(avgFile).split(".avgCoverage")[0]+"\n")
                 for line in file:
-			logRPKM = 0
+			rpkm = 0
                         line = line.strip().split("\t")
                         length = int(line[2]) - int(line[1])
 			try:
 				cov = int(line[3])
 				rpkm = (10e9*cov)/(totalReads*length)
-				logRPKM = log(rpkm,2)
 			except:
 				print(line)
-                        outfile.write(str(logRPKM)+"\n")
+                        outfile.write(str(rpkm)+"\n")
 
 def paste():
         print("RPKM files: {0}".format(" ".join(rpkmFiles)))
@@ -100,13 +99,8 @@ def paste():
 		first = input.readline().strip()
 		for y in input:
 			output.write('\"'+first+'\"'+"\t"+y)
-
 	return pd.read_csv(outfileName, sep='\t')
 
 def cleanUp(outfiles):
         clean = "rm {0}".format(" ".join(outfiles))
         sp.call(clean, shell=True)
-    
-if __name__ == "__main__":
-	files =["/home/jsteenbrugge/gmodels1-3.bed", "/home/jsteenbrugge/pitaRun1-3.bed"]
-	getCoverage(files, sys.argv[1])
