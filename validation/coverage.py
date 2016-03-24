@@ -1,5 +1,7 @@
 import os
+from math import log
 import sys
+import pandas as pd
 import glob
 import subprocess as sp
 
@@ -14,7 +16,8 @@ def getCoverage(files,bamdir):
                 avgFile,totalReads = getAvgCoverage(coverageFile)
                 getRPKM(totalReads, avgFile)
                 cleanUp(outfiles)
-        paste()
+        plotFrame = paste()
+	return plotFrame
 
 def parseBam(bed, bamdir):
 	os.chdir(bamdir)
@@ -22,7 +25,7 @@ def parseBam(bed, bamdir):
 	for file in ["H3K4me3_stage9_2.bam"]: #glob.glob("*.bam"):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
-		cmd = "bedtools coverage -abam {0} -b {1} -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
+		cmd = "bedtools coverage -abam {0} -b {1}  -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
 		sp.call(cmd, shell=True)
         return outfiles
 
@@ -50,9 +53,17 @@ def getAvgCoverage(coverageFile):
                         line = line.strip().split("\t")
                         pos = line[0:3]
                         cov = line[3:]
+			nums = []
                         for i,y in enumerate(cov):
-                                cov[i] = int(y)
-                        avg = sum(cov)/len(cov)
+                                try:
+					nums.append(int(y))
+				except:
+					pass
+			avg = None
+                        try:
+				avg = sum(nums)/len(nums)
+			except:
+				avg = 0
                         totalReads += avg
                         pos.append(str(avg))
                         outfile.write("\t".join(pos)+"\n")
@@ -68,19 +79,29 @@ def getRPKM(totalReads, avgFile):
         with open(avgFile) as file:
                 outfile.write(os.path.basename(avgFile).split(".avgCoverage")[0]+"\n")
                 for line in file:
+			logRPKM = 0
                         line = line.strip().split("\t")
                         length = int(line[2]) - int(line[1])
-                        cov = int(line[3])
-                        rpkm = (10e9*cov)/(totalReads*length)
-                        outfile.write(str(rpkm)+"\n")
+			try:
+				cov = int(line[3])
+				rpkm = (10e9*cov)/(totalReads*length)
+				logRPKM = log(rpkm,2)
+			except:
+				print(line)
+                        outfile.write(str(logRPKM)+"\n")
 
 def paste():
         print("RPKM files: {0}".format(" ".join(rpkmFiles)))
-        outfile = "~/boxPlotData.tsv"
-        cmd = "paste {0} > {1}".format(" ".join(rpkmFiles), outfile)
-        sp.call(cmd, shell=True)
-        plot = "Rscript ~/tools/scripts/validation/boxPlotter.R {0} {1}".format(outfile, "~/boxplot.svg")
-        sp.call(plot, shell= True)
+        outfileName = "boxPlotData.tsv"
+        output = open(outfileName,"w")
+	output.write('\"Name\"\t\"RPKM log2\"\n')
+	for i in rpkmFiles:
+		input = open(i)
+		first = input.readline().strip()
+		for y in input:
+			output.write('\"'+first+'\"'+"\t"+y)
+
+	return pd.read_csv(outfileName, sep='\t')
 
 def cleanUp(outfiles):
         clean = "rm {0}".format(" ".join(outfiles))
