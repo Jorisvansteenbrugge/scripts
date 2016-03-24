@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import tempfile
-import os
 import glob
+import os
 import subprocess as sp
 import pandas as pd
 import numpy as np
@@ -10,11 +10,11 @@ import numpy as np
 bedList = ["/home/joris/data/graphs/pitaRun.bed","/home/joris/data/graphs/bedTest.bed"]
 qScore = 0.05
 boundary = 1000
+outfile = "/home/joris/degroteswagfile"
 
 class Peak:
 	prefix = ""
 	tmpdir = ""
-
 	def __init__(self, fileName,tmpdir):
 		self.tmpdir = tmpdir
 		self.calPeaks(fileName)
@@ -30,16 +30,16 @@ class Peak:
 		return self.prefix
 
 	def compare(self, bed):
-		pita = str(bedFile)
+		peakName = self.tmpdir+"/"+self.prefix+"_peaks.bed"
+		print "comparing {0} with {1}".format(peakName, bed)
 		ranges = []
-		map = {}
 		count=0
-		with open('H3K4_allPeaks.bed') as f:
+		with open(bed) as f:
 			for line in f:
 				line=line.replace("\n","").split("\t")
 				l =[int(line[1]), int(line[2])]
 				ranges.append(l)
-		with open(bedFile) as f:
+		with open(peakName) as f:
 			for line in f:
 				try:
 					line = line.replace("\n","").split("\t")
@@ -47,10 +47,13 @@ class Peak:
 					stop = int(line[1])+int(boundary)
 					for i in ranges:
 						if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-							print("\t".join(line))
+							count+=1
 				except IndexError:
 			        	#print("passed")
 					pass
+		print "Writing count to outfile: {0}".format(count) 
+		file = open(outfile,"a")
+		file.write(os.path.basename(bed).split(".bed")[0]+"\t"+self.prefix+"\t"+str(count)+"\n")
 
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp()
@@ -58,20 +61,27 @@ def parseH3K4dir(h3k4dir):
 	peakList = []
 	for file in glob.glob("{0}H3K4*.bam".format(h3k4dir)):
 		peakList.append(Peak(file, tmpdir))
-	return peakList
+	return peakList, tmpdir
 
 def parseBed(peakList):
 	for bed in bedList:
-		for peak in PeakList
-			peak
+		for peak in peakList:
+			peak.compare(bed)
 		
+def prepOutfile():
+	file = open(outfile,"w")
+	file.write("bed\tpeak\th3\n")
 
 def close(tmpdir):
-	print "Removing: {0}".format(self.tmpdir)
-	os.removedirs(tmpdir)
+	print "Removing: {0}".format(tmpdir)
+	sp.call("rm -r {0}".format(tmpdir),shell = True)
+	#shutil.rmtree(tmpdir)
 
 if __name__ == "__main__":
-	peakList = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
+	peakList, tmpdir = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
+	prepOutfile()
+	parseBed(peakList)
+	close(tmpdir)
 	
 
 
