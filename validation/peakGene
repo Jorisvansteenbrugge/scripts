@@ -30,15 +30,27 @@ class Peak:
 		return self.prefix
 
 	def compare(self, bed):
-		bedDF = pd.read_csv(bed,sep="\t", names = ["chr","start","stop","name","score","strand",
-                                                                         "thickStart","thickEnd","itemRgb","blockCount",
-                                                                         "blockSizes","blockStarts"])
-		df["start"] = df["start"]-boundary
-		df["stop"] = df["start"]+boundary
-		peakName = self.tmpdir+"/"+self.perfix+"_peaks.bed"
-		peakDF = pd.read_csv(peakName, sep="\t", names = ["chr","start","stop","name","score"])
-
-		peakDF["gene"] = np.where()
+		pita = str(bedFile)
+		ranges = []
+		map = {}
+		count=0
+		with open('H3K4_allPeaks.bed') as f:
+			for line in f:
+				line=line.replace("\n","").split("\t")
+				l =[int(line[1]), int(line[2])]
+				ranges.append(l)
+		with open(bedFile) as f:
+			for line in f:
+				try:
+					line = line.replace("\n","").split("\t")
+					start = int(line[1])-int(boundary)
+					stop = int(line[1])+int(boundary)
+					for i in ranges:
+						if (start <= i[0] <= stop) or (start <= i[1] <= stop):
+							print("\t".join(line))
+				except IndexError:
+			        	#print("passed")
+					pass
 
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp()
