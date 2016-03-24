@@ -4,6 +4,23 @@ import sys
 # intersectBed -wao -a bed1 -b bed2 > intersections
 header = "gene\tstartA\tstartB\tstopA\tstopB\texon#A\texon#B\texonLenA\texonLenB\toverlap\texonSame"
 
+def bleedingedge():
+	bed1 = None
+        bed2 = None
+        try:
+                bed1 = sys.argv[1]
+                bed2 = sys.argv[2]
+        except:
+                print("Usage: python bedCompare bed1 bed2\n")
+                sys.exit()
+
+	
+print("Chr\tstartA\tstopA\tnameA\tscoreA\tstrandA\tthickStartA\tthickEndA\trgbA\tblCountA\tblSizeA\blStartsA\t"+
+	"startB\tstopB\tnameB\tscoreB\tstrandB\tthickStartB\tthickEndB\trgbB\tblCountB\tblSizeB\blStartsB\toverlap")
+        intersectCMD = "intersectBed -wao -a {0} -b {1}".format(bed1,bed2)
+        proc = sp.call(intersectCMD, shell=True)
+
+
 def mainFlow():
 	bed1 = None
 	bed2 = None
@@ -54,4 +71,5 @@ def getExonLength(line):
 
 
 if __name__ == "__main__":
-	mainFlow()
+#	mainFlow()
+	bleedingedge()
