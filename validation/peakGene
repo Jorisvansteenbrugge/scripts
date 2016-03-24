@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import tempfile
+import os
+import glob
+import subprocess as sp
+
+#bedfile
+#h3k4dir
+qScore = 0.05
+#boundary
+
+
+class Peaks:
+	peakFiles = []
+	tmpdir = ""
+
+	def __init__(self):
+		self.tmpdir = tempfile.mkdtemp()
+		print self.tmpdir
+
+	def addH3K4(self, fileList):
+		for fileName in fileList:
+			file = tempfile.NamedTemporaryFile(suffix="_peaks",
+							   dir=self.tmpdir)
+			CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName, file.name)
+			sp.call(CMD, shell=True)
+			print "Peaks called for: {0}".format(fileName)
+			self.peakFiles.append(file)		
+
+	def close(self):
+		print "Removing: {0}".format(self.tmpdir)
+		os.removedirs(self.tmpdir)
+
+def parseH3K4dir(h3k4dir):
+	files = []
+	for file in glob.glob("{0}H3K4*.bam".format(h3k4dir)):
+		files.append(file)
+	return files
+
+
+
+if __name__ == "__main__":
+        peaks = Peaks()
+	files = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
+	peaks.addH3K4(files)
