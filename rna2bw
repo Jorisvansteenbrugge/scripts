@@ -1,8 +1,7 @@
 #!/bin/bash
 # This script accepts various types (sra,fastq,sam,bam,sorted bam) and converts them to a bigWig 
 # mapping is done based on the xenopus tropicalis xt9_0 genome
-#
-# missing: chip-seq implementation
+
 # sample command: file2bw <filename>
 
 function sraSplit {
@@ -41,31 +40,4 @@ function bamTobw {
 }
 
 
-
-if [[ "$1" == *".sra"* ]]
-then
-	sraSplit $1
-fi
-if [[ "$1" == *".fastq" ]]
-then
-	mapping $1
-fi
-if [[ "$1" == *".sam" ]]
-then
-	sam2bam $1
-fi
-if [[ "$1" == *".bam" ]]
-then
-	if [[ "$1" == *"sorted"* ]]
-	then
-		bamTobw $1
-	else
-		sorting $1
-	fi
-fi
-if [[ "$1" == "" ]]
-then
-	echo "No input file specified"
-fi
-
-
+sraSplit $1
