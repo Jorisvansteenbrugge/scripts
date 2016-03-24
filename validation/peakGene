@@ -4,43 +4,62 @@ import tempfile
 import os
 import glob
 import subprocess as sp
+import pandas as pd
+import numpy as np
 
-#bedfile
-#h3k4dir
+bedList = ["/home/joris/data/graphs/pitaRun.bed","/home/joris/data/graphs/bedTest.bed"]
 qScore = 0.05
-#boundary
+boundary = 1000
 
-
-class Peaks:
-	peakFiles = []
+class Peak:
+	prefix = ""
 	tmpdir = ""
 
-	def __init__(self):
-		self.tmpdir = tempfile.mkdtemp()
-		print self.tmpdir
+	def __init__(self, fileName,tmpdir):
+		self.tmpdir = tmpdir
+		self.calPeaks(fileName)
+		
+	def calPeaks(self, fileName):
+		self.prefix = os.path.basename(fileName).split(".bam")[0]
+		CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName, 
+                                                                                                    self.tmpdir+"/"+self.prefix)
+		sp.call(CMD, shell=True)
+		print "Peaks called for: {0}".format(fileName)
 
-	def addH3K4(self, fileList):
-		for fileName in fileList:
-			file = tempfile.NamedTemporaryFile(suffix="_peaks",
-							   dir=self.tmpdir)
-			CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName, file.name)
-			sp.call(CMD, shell=True)
-			print "Peaks called for: {0}".format(fileName)
-			self.peakFiles.append(file)		
+	def getPrefix(self):
+		return self.prefix
 
-	def close(self):
-		print "Removing: {0}".format(self.tmpdir)
-		os.removedirs(self.tmpdir)
+	def compare(self, bed):
+		bedDF = pd.read_csv(bed,sep="\t", names = ["chr","start","stop","name","score","strand",
+                                                                         "thickStart","thickEnd","itemRgb","blockCount",
+                                                                         "blockSizes","blockStarts"])
+		df["start"] = df["start"]-boundary
+		df["stop"] = df["start"]+boundary
+		peakName = self.tmpdir+"/"+self.perfix+"_peaks.bed"
+		peakDF = pd.read_csv(peakName, sep="\t", names = ["chr","start","stop","name","score"])
+
+		peakDF["gene"] = np.where()
 
 def parseH3K4dir(h3k4dir):
-	files = []
+	tmpdir = tempfile.mkdtemp()
+	print tmpdir
+	peakList = []
 	for file in glob.glob("{0}H3K4*.bam".format(h3k4dir)):
-		files.append(file)
-	return files
+		peakList.append(Peak(file, tmpdir))
+	return peakList
 
+def parseBed(peakList):
+	for bed in bedList:
+		for peak in PeakList
+			peak
+		
 
+def close(tmpdir):
+	print "Removing: {0}".format(self.tmpdir)
+	os.removedirs(tmpdir)
 
 if __name__ == "__main__":
-        peaks = Peaks()
-	files = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
-	peaks.addH3K4(files)
+	peakList = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
+	
+
+
