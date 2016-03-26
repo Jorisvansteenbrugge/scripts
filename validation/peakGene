@@ -7,10 +7,11 @@ import subprocess as sp
 import pandas as pd
 import numpy as np
 
-bedList = ["/home/joris/data/graphs/pitaRun.bed","/home/joris/data/graphs/bedTest.bed"]
+bedList = ["/data/bed/Stringtie.bed", "/data/bed/Xenbase.bed"]
 qScore = 0.05
 boundary = 1000
 outfile = "/home/joris/degroteswagfile"
+H3K4dir = "/data/h3k4/"
 
 class Peak:
 	prefix = ""
@@ -18,7 +19,7 @@ class Peak:
 	def __init__(self, fileName,tmpdir):
 		self.tmpdir = tmpdir
 		self.calPeaks(fileName)
-		
+
 	def calPeaks(self, fileName):
 		self.prefix = os.path.basename(fileName).split(".bam")[0]
 		CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName, 
@@ -53,7 +54,7 @@ class Peak:
 					pass
 		print "Writing count to outfile: {0}".format(count) 
 		file = open(outfile,"a")
-		file.write(os.path.basename(bed).split(".bed")[0]+"\t"+self.prefix+"\t"+str(count)+"\n")
+		file.write(os.path.basename(bed).split(".bed")[0].split("H3K4me3_")[0]+"\t"+self.prefix+"\t"+str(count)+"\n")
 
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp()
@@ -67,21 +68,21 @@ def parseBed(peakList):
 	for bed in bedList:
 		for peak in peakList:
 			peak.compare(bed)
-		
+
 def prepOutfile():
 	file = open(outfile,"w")
 	file.write("bed\tpeak\th3\n")
 
 def close(tmpdir):
 	print "Removing: {0}".format(tmpdir)
-	sp.call("rm -r {0}".format(tmpdir),shell = True)
-	#shutil.rmtree(tmpdir)
+	#sp.call("rm -r {0}".format(tmpdir),shell = True)
+
 
 if __name__ == "__main__":
-	peakList, tmpdir = parseH3K4dir("/home/joris/data/graphs/flatbreaded/")
+	peakList, tmpdir = parseH3K4dir(H3K4dir)
 	prepOutfile()
 	parseBed(peakList)
 	close(tmpdir)
-	
+
 
 
