@@ -4,7 +4,7 @@
 
 max_bandwidth_mbps=50
 
-# These SRA files are for the durum genome
+#SRA files
 files=(
   'SRR1513978.sra',
   'SRR1511621.sra',
