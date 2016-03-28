@@ -7,7 +7,7 @@ import subprocess as sp
 import pandas as pd
 import numpy as np
 
-bedList = ["/data/bed/Stringtie.bed", "/data/bed/Xenbase.bed"]
+bedList = ["/data/bed/pita.bed", "/data/bed/xenbase.bed"]
 qScore = 0.05
 boundary = 1000
 outfile = "/home/joris/degroteswagfile"
@@ -54,7 +54,7 @@ class Peak:
 					pass
 		print "Writing count to outfile: {0}".format(count) 
 		file = open(outfile,"a")
-		file.write(os.path.basename(bed).split(".bed")[0].split("H3K4me3_")[0]+"\t"+self.prefix+"\t"+str(count)+"\n")
+		file.write(os.path.basename(bed).split(".bed")[0]+"\t"+self.prefix.replace("H3K4me3_","")+"\t"+str(count)+"\n")
 
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp()
@@ -75,7 +75,7 @@ def prepOutfile():
 
 def close(tmpdir):
 	print "Removing: {0}".format(tmpdir)
-	#sp.call("rm -r {0}".format(tmpdir),shell = True)
+	sp.call("rm -r {0}".format(tmpdir),shell = True)
 
 
 if __name__ == "__main__":
