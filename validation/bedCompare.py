@@ -15,7 +15,7 @@ def bleedingedge():
                 sys.exit()
 
 	
-print("Chr\tstartA\tstopA\tnameA\tscoreA\tstrandA\tthickStartA\tthickEndA\trgbA\tblCountA\tblSizeA\blStartsA\t"+
+	print("Chr\tstartA\tstopA\tnameA\tscoreA\tstrandA\tthickStartA\tthickEndA\trgbA\tblCountA\tblSizeA\blStartsA\t"+
 	"startB\tstopB\tnameB\tscoreB\tstrandB\tthickStartB\tthickEndB\trgbB\tblCountB\tblSizeB\blStartsB\toverlap")
         intersectCMD = "intersectBed -wao -a {0} -b {1}".format(bed1,bed2)
         proc = sp.call(intersectCMD, shell=True)
