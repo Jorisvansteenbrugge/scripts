@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+import subprocess as sp
+import argparse
+import tempfile as tp
+
+def arguments():
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-a", dest="a", required = True, help="Target file for comparison")
+    parse.add_argument("-b", dest="b", required = True, help="Querry file for comparison")
+    return parse.parse_args()
+
+def intersect(a,b):
+    cmd = "bedtools intersect -wo -a {0} -b {1}".format(a,b)
+    out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
+    for i in out.stdout:
+        pass
+
+def getExonLen(line):
+    #removeIntrons
+
+def bedPrepare(a,b):
+    for i in [a,b]:
+        with open(i) as infile:
+            for i in infile:
+                getExonLen(line)
+                
+
+if __name__ == "__main__":
+    args = arguments()
+    intersect(args.a,args.b)
+    

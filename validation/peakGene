@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 
 import tempfile
+import logging
 import glob
 import os
+import sys
 import subprocess as sp
 import pandas as pd
 import numpy as np
 
-bedList = ["/data/bed/pita.bed", "/data/bed/xenbase.bed"]
+logging.basicConfig(level=20)
+
+bedList = sys.argv[1:] 
 qScore = 0.05
-boundary = 1000
-outfile = "/home/joris/degroteswagfile"
-H3K4dir = "/data/h3k4/"
+boundary = 100
+outfile = "/home/jsteenbrugge/degroteswagfile"
+H3K4dir = "/home/jsteenbrugge/testdir/bamtest/"
 
 class Peak:
 	prefix = ""
@@ -25,14 +29,14 @@ class Peak:
 		CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName, 
                                                                                                     self.tmpdir+"/"+self.prefix)
 		sp.call(CMD, shell=True)
-		print "Peaks called for: {0}".format(fileName)
+		logging.info("Peaks called for: {0}".format(fileName))
 
 	def getPrefix(self):
 		return self.prefix
 
 	def compare(self, bed):
 		peakName = self.tmpdir+"/"+self.prefix+"_peaks.bed"
-		print "comparing {0} with {1}".format(peakName, bed)
+		logging.info("comparing {0} with {1}".format(peakName, bed))
 		ranges = []
 		count=0
 		with open(bed) as f:
@@ -46,19 +50,22 @@ class Peak:
 					line = line.replace("\n","").split("\t")
 					start = int(line[1])-int(boundary)
 					stop = int(line[1])+int(boundary)
-					for i in ranges:
+					for y,i in enumerate(ranges):
 						if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-							count+=1
-				except IndexError:
-			        	#print("passed")
+							print("\t".join(line))
+                                                        ranges.pop(y)
+                                                        count += 1
+				except IndexError: 
 					pass
-		print "Writing count to outfile: {0}".format(count) 
+		logging.info("Writing count to outfile: {0}".format(count))
 		file = open(outfile,"a")
-		file.write(os.path.basename(bed).split(".bed")[0]+"\t"+self.prefix.replace("H3K4me3_","")+"\t"+str(count)+"\n")
+		file.write(os.path.basename(bed).split(".bed")[0]+"\t"+
+                                                                      self.prefix.replace("H3K4me3_","")+"\t"+str(count)+"\t"+
+                                                                      str(len(ranges))+"\n")
 
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp()
-	print tmpdir
+	logging.info(tmpdir)
 	peakList = []
 	for file in glob.glob("{0}H3K4*.bam".format(h3k4dir)):
 		peakList.append(Peak(file, tmpdir))
@@ -71,10 +78,10 @@ def parseBed(peakList):
 
 def prepOutfile():
 	file = open(outfile,"w")
-	file.write("bed\tpeak\th3\n")
+	file.write("bed\tpeak\th3\ttotal\n")
 
 def close(tmpdir):
-	print "Removing: {0}".format(tmpdir)
+	logging.info("Removing: {0}".format(tmpdir))
 	sp.call("rm -r {0}".format(tmpdir),shell = True)
 
 
