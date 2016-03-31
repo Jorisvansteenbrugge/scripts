@@ -3,7 +3,6 @@ import subprocess as sp
 import argparse
 import tempfile as tp
 
-testFile = "test.bedbed"
 
 def arguments():
     parse = argparse.ArgumentParser()
@@ -11,39 +10,59 @@ def arguments():
     parse.add_argument("-b", dest="b", required = True, help="Querry file for comparison")
     return parse.parse_args()
 
-def intersect(a,b):
+def miniIntersect(a, b):
+    totalA = 0
+    totalB = 0
+    overlaps = float(0)
+    cmd = "bedtools intersect -wao -a {0} -b {1}".format(a,b)
+    out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
+    for i in out.stdout:
+       line = i.strip().split("\t")       
+       overlaps += (float(line[8]))
+       totalA += int(line[3])
+       totalB += int(line[7])
+    sens = overlaps/float(totalA)
+    spes= overlaps/float(totalB)
+    AC = (sens+spes)/2
+    AED = 1-AC
+    #print("SN: {0}    SP: {1}".format(str(sens),str(spes)))
+    print("AED: {0}".format(str(AED)))
+
+def getExonFiles(bedLine, outfile):
+    outfile= open(outfile,"a")
+    start = int(bedLine[1])
+    blSizes = bedLine[10].split(",")
+    blStarts = bedLine[11].split(",")
+    for x,y in enumerate(blSizes):
+        try:
+            size = int(y)
+            chr = bedLine[0]
+            st = start+int(blStarts[x])
+            end = st+size
+            outfile.write("{0}\t{1}\t{2}\t{3}\n".format(chr, st, end, y))
+        except:
+            pass
+    outfile.flush()
+    outfile.close()
+
+def getExonOverlap(line):
+    exons1 = tp.NamedTemporaryFile(delete=False)
+    exons2 = tp.NamedTemporaryFile(delete=False)
+    line = line.strip().split("\t")
+    bed1 = line[0:12]
+    bed2 = line[12:24] 
+    getExonFiles(bed1, exons1.name)
+    getExonFiles(bed2, exons2.name)
+    exons1.seek(0)
+    exons2.seek(0)
+    miniIntersect(exons1.name, exons2.name)
+
+def normalIntersect(a,b):
     cmd = "bedtools intersect -wo -a {0} -b {1}".format(a,b)
     out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
     for i in out.stdout:
-        pass
-
-
-
-def getExonOverlap(line):
-    exons1 = tp.TemporaryFile()
-    exons2 = tp.TemporaryFile()
-    line = line.split("\t")
-    bed1 = line[0:12]
-    bed2 = line[11:24]
-    
-    start = bed1[1]
-    blSizes = bed1[10].split(",")
-    blStarts = bed1[11].split(",")
-    for x,y in enumerate(blSizes):
-        chr = bed1[0]
-        st = start+blStarts[x]
-        end = st+y
-        print("exon: {0}\t{1}\t{2}".format(chr,st,end))
-
-def testRead():
-    with open(testFile) as inFile:
-        for line in inFile:
-            getExonOverlap(line)
-
-                
+        getExonOverlap(i)
 
 if __name__ == "__main__":
-    #args = arguments()
-    #intersect(args.a,args.b)
-    testRead()
-    
+    args = arguments()
+    normalIntersect(args.a,args.b) 
