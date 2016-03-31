@@ -3,6 +3,8 @@ import subprocess as sp
 import argparse
 import tempfile as tp
 
+testFile = "test.bedbed"
+
 def arguments():
     parse = argparse.ArgumentParser()
     parse.add_argument("-a", dest="a", required = True, help="Target file for comparison")
@@ -15,17 +17,33 @@ def intersect(a,b):
     for i in out.stdout:
         pass
 
-def getExonLen(line):
-    #removeIntrons
 
-def bedPrepare(a,b):
-    for i in [a,b]:
-        with open(i) as infile:
-            for i in infile:
-                getExonLen(line)
+
+def getExonOverlap(line):
+    exons1 = tp.TemporaryFile()
+    exons2 = tp.TemporaryFile()
+    line = line.split("\t")
+    bed1 = line[0:12]
+    bed2 = line[11:24]
+    
+    start = bed1[1]
+    blSizes = bed1[10].split(",")
+    blStarts = bed1[11].split(",")
+    for x,y in enumerate(blSizes):
+        chr = bed1[0]
+        st = start+blStarts[x]
+        end = st+y
+        print("exon: {0}\t{1}\t{2}".format(chr,st,end))
+
+def testRead():
+    with open(testFile) as inFile:
+        for line in inFile:
+            getExonOverlap(line)
+
                 
 
 if __name__ == "__main__":
-    args = arguments()
-    intersect(args.a,args.b)
+    #args = arguments()
+    #intersect(args.a,args.b)
+    testRead()
     
