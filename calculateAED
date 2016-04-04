@@ -3,12 +3,22 @@ import subprocess as sp
 import argparse
 import tempfile as tp
 
+finaloutfile = None
 
 def arguments():
     parse = argparse.ArgumentParser()
-    parse.add_argument("-a", dest="a", required = True, help="Target file for comparison")
-    parse.add_argument("-b", dest="b", required = True, help="Querry file for comparison")
+    parse.add_argument("-a", dest="annotation", nargs="+", required = True, help="Space seperated list of annotation bed files")
+    parse.add_argument("-d", dest="data", nargs="+",required = True, help="Space seperated list of datafiles to compare to")
+    parse.add_argument("-o", dest="output",required = True,help="output file")
     return parse.parse_args()
+
+def calcAED(overlaps,totalA,totalB):
+    try:
+        sens = overlaps/float(totalA)
+        spes = overlaps/float(totalB)
+        return 1-((sens+spes)/2)
+    except ZeroDivisionError:
+        return "NA"
 
 def miniIntersect(a, b):
     totalA = 0
@@ -17,17 +27,16 @@ def miniIntersect(a, b):
     cmd = "bedtools intersect -wao -a {0} -b {1}".format(a,b)
     out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
     for i in out.stdout:
-       line = i.strip().split("\t")       
-       overlaps += (float(line[8]))
-       totalA += int(line[3])
-       totalB += int(line[7])
-    sens = overlaps/float(totalA)
-    spes= overlaps/float(totalB)
-    AC = (sens+spes)/2
-    AED = 1-AC
-    #print("SN: {0}    SP: {1}".format(str(sens),str(spes)))
-    print("AED: {0}".format(str(AED)))
+        try:  
+            line = i.strip().split("\t")       
+            overlaps += (float(line[8]))
+            totalA += int(line[3])
+            totalB += int(line[7])
+        except ValueError:
+            pass
+    return calcAED(overlaps,totalA,totalB)
 
+""" Outfile is a temp file"""
 def getExonFiles(bedLine, outfile):
     outfile= open(outfile,"a")
     start = int(bedLine[1])
@@ -45,24 +54,54 @@ def getExonFiles(bedLine, outfile):
     outfile.flush()
     outfile.close()
 
-def getExonOverlap(line):
+def getExonOverlap(line, tpFile):
     exons1 = tp.NamedTemporaryFile(delete=False)
     exons2 = tp.NamedTemporaryFile(delete=False)
     line = line.strip().split("\t")
     bed1 = line[0:12]
-    bed2 = line[12:24] 
+    bed2 = line[12:24]
     getExonFiles(bed1, exons1.name)
     getExonFiles(bed2, exons2.name)
     exons1.seek(0)
     exons2.seek(0)
-    miniIntersect(exons1.name, exons2.name)
+    return miniIntersect(exons1.name, exons2.name)
 
-def normalIntersect(a,b):
+def normalIntersect(a, b, tpFile):
+    temp = open(tpFile,"a")
+    aeds = []
+    append = aeds.append
     cmd = "bedtools intersect -wo -a {0} -b {1}".format(a,b)
     out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
-    for i in out.stdout:
-        getExonOverlap(i)
+    aeds.append([str(getExonOverlap(i,tpFile)) for i in out.stdout])
+    temp.write("\n".join(aeds[0]))
+    temp.flush()
+
+def cleanUp(files):
+    [x.close() for x in files]
+    [os.remove(x) for x in files]
+
+def createJobs(annotation,data):
+    global finaloutfile
+    for dat in data:
+        tmpfiles = []
+        print(dat)
+        for anno in annotation:
+            tpFile = tp.NamedTemporaryFile(delete=False)
+            tpFile.write("\"{0}\"\n".format(anno.replace(".bed","")))
+            tpFile.flush()
+            tmpfiles.append(tpFile.name)
+            normalIntersect(anno, dat,tpFile.name)
+        temp = tp.NamedTemporaryFile(delete=True)
+        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), temp.name),shell=True)
+        sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
+                                                                           dat, finaloutfile, temp.name, finaloutfile), shell=True)
+        print(temp.name)
+        #cleanUp(tmpfiles)
+        temp.close()
+
 
 if __name__ == "__main__":
     args = arguments()
-    normalIntersect(args.a,args.b) 
+    global finaloutfile 
+    finaloutfile= args.output
+    createJobs(args.annotation,args.data) 
