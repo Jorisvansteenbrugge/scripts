@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+import subprocess as sp
+import argparse
+import tempfile as tp
+import Queue
+import threading
+
+finaloutfile = None
+threads = []
+jobList = []
+workQueue = Queue.Queue(10)
+queueLock = threading.Lock()
+threadID = 1
+exitFlag = 0
+
+class myThread(threading.Thread):
+    def __init(self, threadID, name,q):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.q = q
+
+
+    def run(self):
+        print "Starting " + self.name
+        processFile(self.name, self.q)
+        print "Exiting " + self.name
+
+def processFile(threadName,q):
+    while not exitFlag:
+        queueLock.acquire()
+        if not workQueue.empty():
+            data = q.get()
+            queueLock.release()
+            normalIntersect(data[0], data[1],data[2])
+        else:
+            queueLock.release()
+
+def arguments():
+    parse = argparse.ArgumentParser()
+    parse.add_argument("-a", dest="annotation", nargs="+", required = True, help="Space seperated list of annotation bed files")
+    parse.add_argument("-d", dest="data", nargs="+",required = True, help="Space seperated list of datafiles to compare to")
+    parse.add_argument("-o", dest="output",required = True,help="output file")
+    return parse.parse_args()
+
+def calcAED(overlaps,totalA,totalB):
+    try:
+        sens = overlaps/float(totalA)
+        spes = overlaps/float(totalB)
+        return 1-((sens+spes)/2)
+    except ZeroDivisionError:
+        return "NA"
+
+def miniIntersect(a, b):
+    totalA = 0
+    totalB = 0
+    overlaps = float(0)
+    cmd = "bedtools intersect -wao -a {0} -b {1}".format(a,b)
+    out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
+    for i in out.stdout:
+        try:  
+            line = i.strip().split("\t")       
+            overlaps += (float(line[8]))
+            totalA += int(line[3])
+            totalB += int(line[7])
+        except ValueError:
+            pass
+    return calcAED(overlaps,totalA,totalB)
+
+""" Outfile is a temp file"""
+def getExonFiles(bedLine, outfile):
+    outfile= open(outfile,"a")
+    start = int(bedLine[1])
+    blSizes = bedLine[10].split(",")
+    blStarts = bedLine[11].split(",")
+    for x,y in enumerate(blSizes):
+        try:
+            size = int(y)
+            chr = bedLine[0]
+            st = start+int(blStarts[x])
+            end = st+size
+            outfile.write("{0}\t{1}\t{2}\t{3}\n".format(chr, st, end, y))
+        except:
+            pass
+    outfile.flush()
+    outfile.close()
+
+def getExonOverlap(line, tpFile):
+    exons1 = tp.NamedTemporaryFile(delete=False)
+    exons2 = tp.NamedTemporaryFile(delete=False)
+    line = line.strip().split("\t")
+    bed1 = line[0:12]
+    bed2 = line[12:24]
+    getExonFiles(bed1, exons1.name)
+    getExonFiles(bed2, exons2.name)
+    exons1.seek(0)
+    exons2.seek(0)
+    return miniIntersect(exons1.name, exons2.name)
+
+def normalIntersect(a, b, tpFile):
+    temp = open(tpFile,"a")
+    aeds = []
+    append = aeds.append
+    cmd = "bedtools intersect -wo -a {0} -b {1}".format(a,b)
+    out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
+    aeds.append([str(getExonOverlap(i,tpFile)) for i in out.stdout])
+    temp.write("\n".join(aeds[0]))
+    temp.flush()
+
+def cleanUp(files):
+    [x.close() for x in files]
+    [os.remove(x) for x in files]
+
+def startThread(name):
+    global threadID
+    thread = myThread(threadID, anno, workQueue)
+    thread.start()
+    threadID +=1
+    return thread
+
+def createJobs(annotation,data):
+    global finaloutfile
+    global threads
+    global exitFlag
+    for dat in data:
+        tmpfiles = []
+        [threads.append(x) for x in annotation]        
+        queueLock.acquire()
+        for anno in annotation:
+            tpFile = tp.NamedTemporaryFile(delete=False)
+            tpFile.write("\"{0}\"\n".format(anno.replace(".bed","")))
+            tpFile.flush()
+            tmpfiles.append(tpFile.name)
+           # normalIntersect(anno, dat,tpFile.name)
+
+           #fill the queue
+            job = [anno, dat, tpFile.name]
+            workQueue.put(job)
+
+        #release the lock
+        queueLock.release()
+
+        while not workQueue.empty():
+            pass
+        # threads need to die
+        exitFlag = 1
+        
+        for t in threads:   
+            t.join()
+
+        temp = tp.NamedTemporaryFile(delete=True)
+        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), temp.name),shell=True)
+#        raw_input("De data is in: {} (As long as the program is in this pause). You can check/copy it somewhere else for testing. press <enter> to resume".format(temp.name))
+        sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
+                                                                           dat, finaloutfile, temp.name, finaloutfile), shell=True)
+        print(temp.name)
+        #cleanUp(tmpfiles)
+        temp.close()
+
+
+if __name__ == "__main__":
+    args = arguments()
+    global finaloutfile 
+    finaloutfile= args.output
+    createJobs(args.annotation,args.data) 
