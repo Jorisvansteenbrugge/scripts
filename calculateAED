@@ -93,6 +93,7 @@ def createJobs(annotation,data):
             normalIntersect(anno, dat,tpFile.name)
         temp = tp.NamedTemporaryFile(delete=True)
         sp.call("paste {0} > {1}".format(" ".join(tmpfiles), temp.name),shell=True)
+#        raw_input("De data is in: {} (As long as the program is in this pause). You can check/copy it somewhere else for testing. press <enter> to resume".format(temp.name))
         sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
                                                                            dat, finaloutfile, temp.name, finaloutfile), shell=True)
         print(temp.name)
