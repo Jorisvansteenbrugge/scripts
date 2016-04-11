@@ -7,7 +7,7 @@ inputFile =  sys.argv[1]
 class Entry(object):
 	__metaclass__ = ABCMeta
         start = None
-	Chr = None
+        Chr = None
         stop = None
         score = None
         strand = None
@@ -17,8 +17,8 @@ class Entry(object):
 class Exon(Entry):
 
 	def __init__(self,start,stop,score):
-		self.start = int(start)
-		self.stop = int(stop)
+		self.start = int(start) -1 
+		self.stop = int(stop) 
 		self.score = score
 
 	def getLength(self):
@@ -32,8 +32,8 @@ class Transcript(Entry):
 	bedline = None
 	def __init__(self,Chr, start,stop,score,strand,attribute):
 		self.Chr = Chr
-		self.start = int(start)
-		self.stop = int(stop)
+		self.start = int(start) - 1
+		self.stop = int(stop) 
 		self.score = score
 		self.strand = strand
 		self.attribute = attribute
@@ -84,20 +84,13 @@ def parseGTF():
 			line = line.split("\t")
 			if "transcript" in line:
 				if not trscript:
-					trscript = Transcript(line[0],
-							      line[3], line[4],
-							      line[5],line[6],
-                                                              line[8])
+					trscript = Transcript(line[0], line[3], line[4], line[5],line[6],line[8])
 				else:
 					print trscript.toBed12()
 					trscript = None
-					trscript = Transcript(line[0],
-                                                              line[3], line[4],
-                                                              line[5],line[6],
-                                                              line[8])
+					trscript = Transcript(line[0],line[3], line[4],line[5],line[6],line[8])
 			elif "exon" in line:
-				trscript.addExon(line[3],line[4],line[5])
-				
+				trscript.addExon(line[3],line[4],line[5])		
 		print trscript.toBed12()
 	return 0
 
