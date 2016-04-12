@@ -14,8 +14,8 @@ logging.basicConfig(level=20)
 bedList = sys.argv[1:] 
 qScore = 0.05
 boundary = 100
-outfile = "/home/jsteenbrugge/degroteswagfile"
-H3K4dir = "/home/jsteenbrugge/calculations/bamShort/"
+outfile = "/home/joris/degroteswagfile"
+H3K4dir = "/home/joris/Desktop/peakCity/peakFiles/"
 
 class Peak:
 	prefix = ""
@@ -45,7 +45,7 @@ class Peak:
 	def compare(self, bed):
 		peakName = self.tmpdir+"/"+self.prefix+"_peaks.bed"
 		logging.info("comparing {0} with {1}".format(peakName, bed))
-                totalPeaks = self.getPeakCount(peakName)                
+                totalPeaks = self.getPeakCount(peakName)
 		ranges = []
 		count=0
 		with open(bed) as f:
@@ -61,10 +61,10 @@ class Peak:
 					stop = int(line[1])+int(boundary)
 					for y,i in enumerate(ranges):
 						if (start <= i[0] <= stop) or (start <= i[1] <= stop):
-							print("\t".join(line))
+							print("\t".join(i))
                                                         ranges.pop(y)
                                                         count += 1
-				except IndexError: 
+				except IndexError:
 					pass
                 relativeCount = (count*100)/totalPeaks
 		logging.info("Writing count to outfile: {0}".format(relativeCount))
@@ -77,7 +77,7 @@ def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp(prefix="peakGene.")
 	logging.info(tmpdir)
 	peakList = []
-	for file in glob.glob("{0}H3K4*.bam".format(h3k4dir)):
+	for file in glob.glob("{0}H3K4me3_stage9.bam".format(h3k4dir)):
 		peakList.append(Peak(file, tmpdir))
 	return peakList, tmpdir
 
