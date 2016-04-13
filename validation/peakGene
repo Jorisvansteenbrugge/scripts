@@ -11,7 +11,7 @@ import numpy as np
 
 logging.basicConfig(level=20)
 
-bedList = sys.argv[1:] 
+bedList = sys.argv[1:]
 qScore = 0.05
 boundary = 100
 outfile = "/home/joris/degroteswagfile"
@@ -34,6 +34,9 @@ class Peak:
 	def getPrefix(self):
 		return self.prefix
 
+	def getPath(self):
+		return self.tmpdir + "/" + self.prefix + "_peaks.bed"
+
         def getPeakCount(self, name):
                 num = 0
                 out = sp.Popen("cat {0} | wc -l".format(name), shell=True, stdout=sp.PIPE)
@@ -52,18 +55,20 @@ class Peak:
 			for line in f:
 				line=line.replace("\n","").split("\t")
 				l =[int(line[1]), int(line[2])]
-				ranges.append(l)
+				ranges.append(line)
 		with open(peakName) as f:
 			for line in f:
 				try:
 					line = line.replace("\n","").split("\t")
 					start = int(line[1])-int(boundary)
 					stop = int(line[1])+int(boundary)
-					for y,i in enumerate(ranges):
-						if (start <= i[0] <= stop) or (start <= i[1] <= stop):
+					for i in ranges:
+						if (start <= int(i[1]) <= stop) or (start <= int(i[2]) <= stop):
+							i[8] = "40,235,60"
 							print("\t".join(i))
-                                                        ranges.pop(y)
-                                                        count += 1
+							count += 1
+						else:
+							print("\t".join(i))
 				except IndexError:
 					pass
                 relativeCount = (count*100)/totalPeaks
@@ -77,7 +82,7 @@ def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp(prefix="peakGene.")
 	logging.info(tmpdir)
 	peakList = []
-	for file in glob.glob("{0}H3K4me3_stage9.bam".format(h3k4dir)):
+	for file in glob.glob("{0}H3K4me3_*.bam".format(h3k4dir)):
 		peakList.append(Peak(file, tmpdir))
 	return peakList, tmpdir
 
@@ -88,7 +93,8 @@ def parseBed(peakList):
 
 def prepOutfile():
 	file = open(outfile,"w")
-	file.write("bed\tpeak\th3\ttotal\n")
+	file.write("bed\tpeak\th3\ttotal\n") #For peakCount output
+	print("track name=\"pitaRGB\" itemRgb=\"On\"" ) #For the colored bed file
 
 def close(tmpdir):
 	logging.info("Removing: {0}".format(tmpdir))
