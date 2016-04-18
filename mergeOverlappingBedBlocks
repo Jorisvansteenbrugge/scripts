@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+import sys
+import pybedtools
+import tempfile as tp
+
+infile = sys.argv[1]
+
+def getBlockSizes(obj):
+    sizes = []
+    for i in obj:
+        i = i.split("\t")
+        sizes.append(str(int(i[2])-int(i[1])))
+    return ",".join(sizes)
+
+def getBlockStarts(obj,start):
+    starts = []
+    for i in obj:
+        i = i.split("\t")
+        starts.append(str(int(i[1])-int(start)))
+    return ",".join(starts)
+
+with open(infile) as file:
+    for i in file:
+        try:
+            line = i.strip().split("\t")
+            contig = line[0]
+            start = line[1]
+            end = line[2]
+            blocks = int(line[9])
+            starts = line[10].split(",")
+            lens = line[11].split(",")
+
+            
+            blockPos=[]
+            tmp = tp.NamedTemporaryFile(delete=True, suffix=".bed")
+
+            for i in range(blocks):
+                blStart = start + starts[i]
+                blEnd = blStart+lens[i]
+                bedline = contig+"\t"+blStart+"\t"+ blEnd+"\n"
+                print(bedline)
+                tmp.write(bedline)
+            tmp.flush()
+
+            a = pybedtools.BedTool(tmp.name)
+            sMerged = a.sort().merge()
+            newCount = str(sMerged).split("\n")
+            newCount.remove("")
+            
+            print(newCount)
+            if len(newCount) != blocks:
+                outLine = []
+                outLine.append(contig)
+                outLine.append(start)
+                outLine.append(end)
+                outLine.append(line[3])
+                outLine.append(line[4])
+                outLine.append(line[5])
+                outLine.append(line[6])
+                outLine.append(line[7])
+                outLine.append(line[8])
+                outLine.append(str(len(newCount)))
+                outLine.append(getBlockSizes(newCount))
+                outLine.append(getBlockStarts(newCount, start))
+                print("\t".join(outLine))
+            else:
+                print(line)
+
+        except IndexError:
+            pass
+
