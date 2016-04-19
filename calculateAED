@@ -10,6 +10,8 @@ def arguments():
     parse.add_argument("-a", dest="annotation", nargs="+", required = True, help="Space seperated list of annotation bed files")
     parse.add_argument("-d", dest="data", nargs="+",required = True, help="Space seperated list of datafiles to compare to")
     parse.add_argument("-o", dest="output",required = True,help="output file")
+    parse.add_argument("--keep", action='store_true', required = False, 
+                        help="save intermediate AED scores before statistical test (and not throw them away after")
     return parse.parse_args()
 
 def calcAED(overlaps,totalA,totalB):
@@ -80,7 +82,7 @@ def cleanUp(files):
     [x.close() for x in files]
     [os.remove(x) for x in files]
 
-def createJobs(annotation,data):
+def createJobs(annotation,data, deltemp):
     global finaloutfile
     for dat in data:
         tmpfiles = []
@@ -91,18 +93,25 @@ def createJobs(annotation,data):
             tpFile.flush()
             tmpfiles.append(tpFile.name)
             normalIntersect(anno, dat,tpFile.name)
-        temp = tp.NamedTemporaryFile(delete=True)
-        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), temp.name),shell=True)
-#        raw_input("De data is in: {} (As long as the program is in this pause). You can check/copy it somewhere else for testing. press <enter> to resume".format(temp.name))
+        aedFilename = ""
+        if deltemp:
+            temp = tp.NamedTemporaryFile(delete=True)
+            aedFileName = temp.name
+        else:
+            aedFileName = "intermediate_{}".format(finaloutfile)
+        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), aedFileName),shell=True)
         sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
-                                                                           dat, finaloutfile, temp.name, finaloutfile), shell=True)
+                                                                           dat, finaloutfile, aedFileName, finaloutfile), shell=True)
         print(temp.name)
         #cleanUp(tmpfiles)
         temp.close()
 
 
 if __name__ == "__main__":
+    delete = True
     args = arguments()
+    if args.keep:
+        delete=False        
     global finaloutfile 
     finaloutfile= args.output
-    createJobs(args.annotation,args.data) 
+    createJobs(args.annotation,args.data, delete) 
