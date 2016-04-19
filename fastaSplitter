@@ -16,10 +16,11 @@ for i in file:
 			outfile = open(name+".fa","w")
 			outfile.write(">"+name+"\n")
 			outfile.write(seq)
-		name = i.split(" ")[0].replace(">","")
+		name = i.split(" ")[0].replace(">","")                
 		seq = ""
 	else:
 		seq+=i
 
+outfile = open(name+".fa","w")
 outfile.write(">"+name+"\n")
 outfile.write(seq)
