@@ -32,12 +32,13 @@ with open(infile) as file:
 
             
             blockPos=[]
-            tmp = tp.NamedTemporaryFile(delete=True, suffix=".bed")
+            tmp = tp.NamedTemporaryFile(delete=False, suffix=".bed")
 
             for i in range(blocks):
-                blStart = start + starts[i]
-                blEnd = blStart+lens[i]
-                bedline = contig+"\t"+blStart+"\t"+ blEnd+"\n"
+                blStart = int(start) + int(starts[i])
+                blEnd = blStart+ int(lens[i])
+                print("blEnd = {0} + {1}".format(blStart, lens[i]))
+                bedline = contig+"\t"+str(blStart)+"\t"+ str(blEnd)+"\n"
                 print(bedline)
                 tmp.write(bedline)
             tmp.flush()
