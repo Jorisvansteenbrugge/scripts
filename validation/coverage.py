@@ -22,7 +22,7 @@ def getCoverage(files,bamdir):
 def parseBam(bed, bamdir):
 	os.chdir(bamdir)
         outfiles = []
-	for file in ["H3K4me3_stage9_2.bam"]: #glob.glob("*.bam"):
+	for file in glob.glob("*.bam"):
                 outfile = file.split(".bam")[0]+identifier
                 outfiles.append(bamdir+outfile)
 		cmd = "bedtools coverage -abam {0} -b {1}  -counts -d | cut -f 4 > {2}".format(file,bed,outfile)
@@ -104,3 +104,11 @@ def paste():
 def cleanUp(outfiles):
         clean = "rm {0}".format(" ".join(outfiles))
         sp.call(clean, shell=True)
+
+if __name__ == "__main__":
+	if len(sys.argv) <2:
+		print("Usage: coverage.py [bamDir] {bed1, bed2, bed3}")
+		sys.exit(1)
+	bedFiles = sys.argv[2:]
+	bamdir  = sys.argv[1]
+	getCoverage(bedFiles, bamdir)
