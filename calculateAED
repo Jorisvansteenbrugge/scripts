@@ -11,7 +11,7 @@ def arguments():
     parse.add_argument("-d", dest="data", nargs="+",required = True, help="Space seperated list of datafiles to compare to")
     parse.add_argument("-o", dest="output",required = True,help="output file")
     parse.add_argument("--keep", action='store_true', required = False, 
-                        help="save intermediate AED scores before statistical test (and not throw them away after")
+                        help="save intermediate AED scores before statistical test (and not throw them away after). Keeping is recommended because the R script does not work fully yet")
     return parse.parse_args()
 
 def calcAED(overlaps,totalA,totalB):
@@ -21,7 +21,10 @@ def calcAED(overlaps,totalA,totalB):
         return 1-((sens+spes)/2)
     except ZeroDivisionError:
         return "NA"
+"""
+Performs a second intersect on the exons from each paired gene
 
+"""
 def miniIntersect(a, b):
     totalA = 0
     totalB = 0
@@ -56,6 +59,10 @@ def getExonFiles(bedLine, outfile):
     outfile.flush()
     outfile.close()
 
+"""
+filters the line from the bedtools intersect output into 2 seperate bed12 lines.
+These Lines are finally send to miniIntersect() which intersects the exons for every gene.
+"""
 def getExonOverlap(line, tpFile):
     exons1 = tp.NamedTemporaryFile(delete=False)
     exons2 = tp.NamedTemporaryFile(delete=False)
@@ -68,6 +75,10 @@ def getExonOverlap(line, tpFile):
     exons2.seek(0)
     return miniIntersect(exons1.name, exons2.name)
 
+"""
+Intersects the data file with the annotation file.
+The output is send to the exonOverlap method
+"""
 def normalIntersect(a, b, tpFile):
     temp = open(tpFile,"a")
     aeds = []
@@ -82,6 +93,13 @@ def cleanUp(files):
     [x.close() for x in files]
     [os.remove(x) for x in files]
 
+"""
+Launches the compare code per data files with each annotation
+The AED scores are stored in a temporary file (tpFile) that is stored in the tmpfiles list.
+The user can decide werther to dele or keep the temporary files. 
+Currently keeping is recommended as the R script for the final output is not working properly.
+
+"""
 def createJobs(annotation,data, deltemp):
     global finaloutfile
     for dat in data:
