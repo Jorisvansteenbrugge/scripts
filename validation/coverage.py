@@ -4,18 +4,22 @@ import sys
 import pandas as pd
 import glob
 import subprocess as sp
+from tempfile import NamedTemporaryFile as tmp
 
 identifier = "xXxcoveragexXx.bed"
 rpkmFiles = []
 
 def getCoverage(files,bamdir):
 	for i in files:
+		#cutted = tmp(delete=False)
+		#sp.call("cut -f 1-3 {} > {}".format(i,cutted.name), shell=True)
                 print(i)
 		outfiles = parseBam(i,bamdir)
-                coverageFile = mergeCounts(i,outfiles)
+                coverageFile = mergeCounts(i, outfiles)
                 avgFile,totalReads = getAvgCoverage(coverageFile)
                 getRPKM(totalReads, avgFile)
                 cleanUp(outfiles)
+#		cutted.close()
         plotFrame = paste()
 	return plotFrame
 
@@ -52,7 +56,7 @@ def getAvgCoverage(coverageFile):
                 for line in file:
                         line = line.strip().split("\t")
                         pos = line[0:3]
-                        cov = line[3:]
+                        cov = line[-1]
 			nums = []
                         for i,y in enumerate(cov):
                                 try:
@@ -107,8 +111,9 @@ def cleanUp(outfiles):
 
 if __name__ == "__main__":
 	if len(sys.argv) <2:
-		print("Usage: coverage.py [bamDir] {bed1, bed2, bed3}")
+		print("Usage: coverage.py <bamDir> [bed1, bed2, bed3]")
 		sys.exit(1)
+
 	bedFiles = sys.argv[2:]
 	bamdir  = sys.argv[1]
 	getCoverage(bedFiles, bamdir)

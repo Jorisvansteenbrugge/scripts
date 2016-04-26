@@ -94,6 +94,7 @@ def createJobs(annotation,data, deltemp):
             tmpfiles.append(tpFile.name)
             normalIntersect(anno, dat,tpFile.name)
         aedFilename = ""
+        temp = None
         if deltemp:
             temp = tp.NamedTemporaryFile(delete=True)
             aedFileName = temp.name
@@ -102,9 +103,12 @@ def createJobs(annotation,data, deltemp):
         sp.call("paste {0} > {1}".format(" ".join(tmpfiles), aedFileName),shell=True)
         sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
                                                                            dat, finaloutfile, aedFileName, finaloutfile), shell=True)
-        print(temp.name)
-        #cleanUp(tmpfiles)
-        temp.close()
+        try:
+            print(temp.name)
+            #cleanUp(tmpfiles)
+            temp.close()
+        except:
+            pass
 
 
 if __name__ == "__main__":
