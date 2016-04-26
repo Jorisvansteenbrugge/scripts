@@ -8,14 +8,13 @@ import sys
 import subprocess as sp
 import pandas as pd
 import numpy as np
+import argparse
 
 logging.basicConfig(level=20)
 
-bedList = sys.argv[1:]
+
 qScore = 0.05
 boundary = 100
-outfile = "/home/joris/degroteswagfile"
-H3K4dir = "/home/joris/Desktop/peakCity/peakFiles/"
 
 class Peak:
 	prefix = ""
@@ -45,7 +44,7 @@ class Peak:
                 logging.info("The amount of peaks = {0}".format(num))
                 return num
 
-def compare(peak, bed):
+def compare(peak, bed, outfile):
 	peakName = peak.tmpdir+"/"+peak.prefix+"_peaks.bed"
 	logging.info("comparing {0} with {1}".format(peakName, bed))
         totalPeaks = peak.getPeakCount(peakName)
@@ -95,30 +94,29 @@ def compareNcolor(peak, bed):
                                 stop = int(line[1])+int(boundary)
                                 for y,i in enumerate(ranges):
 					if not done:
-        	                                if (start <= int(i[1]) <= stop) or (start <= int(i[2]) <= stop):
-		                                       	line[8] = "0,177,92"
-                	                               	print("\t".join(line))
+						if (start <= int(i[1]) <= stop) or (start <= int(i[2]) <= stop):
+							line[8] = "0,177,92"
+							print("\t".join(line))
 							done = True
 				if not done:
 					print("\t".join(line))
                         except IndexError:
                                 pass
 
-
 def parseH3K4dir(h3k4dir):
 	tmpdir = tempfile.mkdtemp(prefix="peakGene.")
 	logging.info(tmpdir)
 	peakList = []
-#	for file in glob.glob("{0}H3K4me3_*.bam".format(h3k4dir)):
-	for file in ["/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9_2.bam", "/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9.bam" ]:
+	for file in glob.glob("{0}H3K4me3_*.bam".format(h3k4dir)):
+#	for file in ["/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9_2.bam", "/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9.bam" ]:
 		peakList.append(Peak(file, tmpdir))
 	return peakList, tmpdir
 
-def parseBed(peakList):
+def parseBed(peakList, bedList, outfile):
 	for bed in bedList:
 		for peak in peakList:
-			compare(peak, bed)
-def colorBed(peakList):
+			compare(peak, bed, outfile)
+def colorBed(peakList, bedList):
 	outfile = tempfile.NamedTemporaryFile(delete = False)
 	combined = tempfile.NamedTemporaryFile(delete=True)
 	sort = tempfile.NamedTemporaryFile(delete=True)
@@ -152,17 +150,27 @@ def close(tmpdir):
 	logging.info("Removing: {0}".format(tmpdir))
 	sp.call("rm -r {0}".format(tmpdir),shell = True)
 
+def argParse():
+	p = argparse.ArgumentParser()
+	p.add_argument("-p", dest="peakdir", help="Directory with H3K4me4 bam files", required = True)
+	p.add_argument("-b", dest="bedFiles", nargs="+", help="Space seperated list of bed files to use. Minimum is 1, however the result of this would not be informative", required = True)
+	p.add_argument("-o", dest="outfile", help="Output data file", required = True)
+	return p.parse_args()
 
 if __name__ == "__main__":
 	tmpdir = ""
+	args = argParse()
+	H3K4dir = args.peakdir
+	bedList = args.bedFiles
+	outfile = args.outfile
 	try:
-        	peakList, tmpdir = parseH3K4dir(H3K4dir)
-	    	prepOutfile()
-	    	parseBed(peakList)
-		colorBed(peakList)
-	    	close(tmpdir)
+		peakList, tmpdir = parseH3K4dir(H3K4dir)
+		prepOutfile()
+		parseBed(peakList, bedList, outfile)
+		colorBed(peakList, bedList)
+		close(tmpdir)
         except KeyboardInterrupt:
-            	close(tmpdir)
+		close(tmpdir)
 
 
 
