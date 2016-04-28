@@ -10,6 +10,8 @@ def arguments():
     parse.add_argument("-a", dest="annotation", nargs="+", required = True, help="Space seperated list of annotation bed files")
     parse.add_argument("-d", dest="data", nargs="+",required = True, help="Space seperated list of datafiles to compare to")
     parse.add_argument("-o", dest="output",required = True,help="output file")
+    parse.add_argument("--keep", action='store_true', required = False, 
+                        help="save intermediate AED scores before statistical test (and not throw them away after). Keeping is recommended because the R script does not work fully yet")
     return parse.parse_args()
 
 def calcAED(overlaps,totalA,totalB):
@@ -19,7 +21,10 @@ def calcAED(overlaps,totalA,totalB):
         return 1-((sens+spes)/2)
     except ZeroDivisionError:
         return "NA"
+"""
+Performs a second intersect on the exons from each paired gene
 
+"""
 def miniIntersect(a, b):
     totalA = 0
     totalB = 0
@@ -54,6 +59,10 @@ def getExonFiles(bedLine, outfile):
     outfile.flush()
     outfile.close()
 
+"""
+filters the line from the bedtools intersect output into 2 seperate bed12 lines.
+These Lines are finally send to miniIntersect() which intersects the exons for every gene.
+"""
 def getExonOverlap(line, tpFile):
     exons1 = tp.NamedTemporaryFile(delete=False)
     exons2 = tp.NamedTemporaryFile(delete=False)
@@ -66,6 +75,10 @@ def getExonOverlap(line, tpFile):
     exons2.seek(0)
     return miniIntersect(exons1.name, exons2.name)
 
+"""
+Intersects the data file with the annotation file.
+The output is send to the exonOverlap method
+"""
 def normalIntersect(a, b, tpFile):
     temp = open(tpFile,"a")
     aeds = []
@@ -80,7 +93,14 @@ def cleanUp(files):
     [x.close() for x in files]
     [os.remove(x) for x in files]
 
-def createJobs(annotation,data):
+"""
+Launches the compare code per data files with each annotation
+The AED scores are stored in a temporary file (tpFile) that is stored in the tmpfiles list.
+The user can decide werther to dele or keep the temporary files. 
+Currently keeping is recommended as the R script for the final output is not working properly.
+
+"""
+def createJobs(annotation,data, deltemp):
     global finaloutfile
     for dat in data:
         tmpfiles = []
@@ -91,18 +111,29 @@ def createJobs(annotation,data):
             tpFile.flush()
             tmpfiles.append(tpFile.name)
             normalIntersect(anno, dat,tpFile.name)
-        temp = tp.NamedTemporaryFile(delete=True)
-        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), temp.name),shell=True)
-#        raw_input("De data is in: {} (As long as the program is in this pause). You can check/copy it somewhere else for testing. press <enter> to resume".format(temp.name))
+        aedFilename = ""
+        temp = None
+        if deltemp:
+            temp = tp.NamedTemporaryFile(delete=True)
+            aedFileName = temp.name
+        else:
+            aedFileName = "intermediate_{}".format(finaloutfile)
+        sp.call("paste {0} > {1}".format(" ".join(tmpfiles), aedFileName),shell=True)
         sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
-                                                                           dat, finaloutfile, temp.name, finaloutfile), shell=True)
-        print(temp.name)
-        #cleanUp(tmpfiles)
-        temp.close()
+                                                                           dat, finaloutfile, aedFileName, finaloutfile), shell=True)
+        try:
+            print(temp.name)
+            #cleanUp(tmpfiles)
+            temp.close()
+        except:
+            pass
 
 
 if __name__ == "__main__":
+    delete = True
     args = arguments()
+    if args.keep:
+        delete=False        
     global finaloutfile 
     finaloutfile= args.output
-    createJobs(args.annotation,args.data) 
+    createJobs(args.annotation,args.data, delete) 
