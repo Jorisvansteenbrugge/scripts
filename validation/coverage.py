@@ -72,7 +72,7 @@ def getAvgCoverage(coverageFile):
                         pos.append(str(avg))
                         outfile.write("\t".join(pos)+"\n")
 
-        print("total reads for {0}: {1}".format(coverageFile,totalReads))
+        print("total reads for {}: {}".format(coverageFile,totalReads))
         outfile.close()
         return outname, totalReads
 
@@ -85,8 +85,8 @@ def getRPKM(totalReads, avgFile):
                 for line in file:
 			rpkm = 0
                         line = line.strip().split("\t")
-                        length = int(line[2]) - int(line[1])
-			try:
+                        try:
+				length = int(line[2]) - int(line[1])
 				cov = int(line[3])
 				rpkm = (10e9*cov)/(totalReads*length)
 			except:
@@ -95,7 +95,7 @@ def getRPKM(totalReads, avgFile):
 
 def paste():
         print("RPKM files: {0}".format(" ".join(rpkmFiles)))
-        outfileName = "boxPlotData.tsv"
+        outfileName = "swagboxPlotData.tsv"
         output = open(outfileName,"w")
 	output.write('\"Name\"\t\"RPKM log2\"\n')
 	for i in rpkmFiles:
