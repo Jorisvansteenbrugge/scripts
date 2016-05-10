@@ -5,6 +5,7 @@ import tempfile
 import logging
 import os
 import glob 
+import types
 
 logging.basicConfig(level=20)
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -17,8 +18,8 @@ class Peak:
 
     def __init__(self, fileName=None, tmpdir=None, path=None):
         self.tmpdir = tmpdir
-        self.prefix = os.path.basename(fileName).split(".bam")[0]
         if not path:
+            self.prefix = os.path.basename(fileName).split(".bam")[0]
             self._callPeaks(fileName)
         else:
             self.path = path 
@@ -100,7 +101,6 @@ def parsePeakDir(h3k4List, r):
         else:
             peakList.append(Peak(path=bamFile))
         logging.info("creating Peak obj {}".format(bamFile))
-        peakList.append(Peak(bamFile,tmpdir))
     return peakList, tmpdir
 
 def prepOutfile(outfile):
@@ -123,15 +123,24 @@ def getFirstExonBed(bedFile):
 
 def parseBed(peakList, bedList, outfile):
     outfile = open(outfile,"a")
+    logging.info("bedList: {}".format(bedList))
+    logging.info("peakList: {}".format(peakList))
     for bed in bedList:
         newBed = getFirstExonBed(bed)
+        logging.info("In bed {}".format(bed))
         for peak in peakList:
-            peakCount = peak._intersectCount(newBed)
+            print(type(peak))
+            print(peak)
+            if type(peak) is list:
+                peak = peak[0]
+                
+            try:
+                peakCount = peak._intersectCount(newBed)
+            except AttributeError:
+                print(peak)
             geneCount = getTotalGeneCount(newBed)
-
             relativeCount = (peakCount*100)/geneCount
             logging.info("relativeCount for {} = {}".format(bed, relativeCount))
-
             outfile.write(os.path.basename(bed).replace(".bed","")+"\t"+peak.getPrefix()+"\t"+str(relativeCount)+"\n")
     outfile.close()
     
@@ -143,11 +152,13 @@ if __name__ == "__main__":
     outfile = args.outfile
     r = False
     if not args.reannotate:
-        h3k4dir = args.peakdir
-        h3k4List = glob.glob("{}*.bam".format(h3k4dir))
+        #h3k4dir = args.peakdir
+        #h3k4List = glob.glob("{}*.bam".format(h3k4dir))
+        pass
     else:
         r = True
         h3k4List = args.reannotate
+        print(h3k4List)
 
     peakList = parsePeakDir(h3k4List, r)
     prepOutfile(outfile)
