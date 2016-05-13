@@ -74,8 +74,7 @@ tropMRNAPlot <- ggplot(data=tropMRNA, aes(stage, count, fill=stage)) +
 
 total <- ggplot(data=df, aes(x=annotation,y=count,fill=annotation)) +
   geom_bar(stat="identity") + 
-  scale_fill_manual(values= cbbPalette)+ 
-  #scale_y_continuous(breaks = c(0,5,10,15,20,25,30))+
+  #scale_fill_manual(values= cbbPalette)+ 
   theme(axis.text.x = element_text(angle = 50, hjust = 1))+
   ggtitle("Pita Chr02 10% (No. of Genes with H3K4me3 start) no 1 exon genes")+
   labs(x="Annotation", y="No. of H3K4me3 genes")+
