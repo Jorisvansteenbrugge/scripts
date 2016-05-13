@@ -9,7 +9,7 @@ import types
 
 logging.basicConfig(level=20)
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-qscore = 0.05
+qscore = 0.01
 
 class Peak:
     prefix = ""
@@ -136,12 +136,14 @@ def parseBed(peakList, bedList, outfile):
                 
             try:
                 peakCount = peak._intersectCount(newBed)
-            except AttributeError:
+            
                 print(peak)
-            geneCount = getTotalGeneCount(newBed)
-            relativeCount = (peakCount*100)/geneCount
-            logging.info("relativeCount for {} = {}".format(bed, relativeCount))
-            outfile.write(os.path.basename(bed).replace(".bed","")+"\t"+peak.getPrefix()+"\t"+str(relativeCount)+"\n")
+                geneCount = getTotalGeneCount(newBed)
+                relativeCount = (peakCount*100)/geneCount
+                logging.info("relativeCount for {} = {}".format(bed, relativeCount))
+                outfile.write(os.path.basename(bed).replace(".bed","")+"\t"+peak.getPrefix()+"\t"+str(relativeCount)+"\n")
+            except AttributeError:
+                pass
     outfile.close()
     
 
@@ -152,8 +154,8 @@ if __name__ == "__main__":
     outfile = args.outfile
     r = False
     if not args.reannotate:
-        #h3k4dir = args.peakdir
-        #h3k4List = glob.glob("{}*.bam".format(h3k4dir))
+        h3k4dir = args.peakdir
+        h3k4List = glob.glob("{}*.bam".format(h3k4dir))
         pass
     else:
         r = True
