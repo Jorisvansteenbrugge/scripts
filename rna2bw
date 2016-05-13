@@ -1,11 +1,11 @@
 #!/bin/bash
-# This script accepts various types (sra,fastq,sam,bam,sorted bam) and converts them to a bigWig 
-# mapping is done based on the xenopus tropicalis xt9_0 genome
+# This script accepts sra files (compressed fastq) and converts them to a bigWiggle, alongside with sorted, indexed bam files.
+# mapping is done based on the xenopus tropicalis xt9_0 genome in this example
 
-# sample command: file2bw <filename>
+# sample command: rna2bw <filename>
 
 function sraSplit {
-	echo "Going to convert sra2fastq, ga maar alvast koffie halen..."
+	echo "Going to convert sra2fastq"
 	fastq-dump $1 --split-files # -X 100
 	mapping $1
 }
@@ -34,6 +34,7 @@ function sorting {
 	#bamTobw $1
 }
 
+#bigWiggle files can be used for visualization in the UCSC genome browser
 function bamTobw {
 	bam2bw -D -S -i $(basename $1 .sra)_sorted.bam -o $(basename $1 .sra).bw
 	echo "---finished---"
