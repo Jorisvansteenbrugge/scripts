@@ -1,176 +1,91 @@
 #!/usr/bin/env python
-
-import tempfile
-import logging
-import glob
-import os
 import sys
-import subprocess as sp
-import pandas as pd
-import numpy as np
 import argparse
+from os import path
+import logging
+import subprocess as sp
+from glob import glob
+from tempfile import NamedTemporaryFile as ntp
 
 logging.basicConfig(level=20)
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
+"""
+Paring of command line arguments
+"""
+def parseArgs():
+    p = argparse.ArgumentParser()
+    p.add_argument("-p", dest="peakdir", help="Directory with Peak called bedfiles", required = True)
+    p.add_argument("-b", dest="bedFiles", nargs="+", help="Space seperated list of bed files to use. Minimum is 1, however the result of this would not be informative ;)", required = True)
+    p.add_argument("-o", dest="outfile", help="Output data file", required = True)
+    logging.info("Arguments parsed")
+    return p.parse_args()
 
 
-qScore = 0.05
-boundary = 100
+def parseBedFiles(bedFiles, peakdir, outfile):
+    outPut = open(outfile,"w")
+    outPut.write('"annotation"\t"stage"\t"count"\t"total"\n') 
+    for bed in bedFiles: 
+        #extract the bed file name
+        entryName = path.basename(bed).replace(".bed","")
 
-class Peak:
-	prefix = ""
-	tmpdir = ""
-	def __init__(self, fileName,tmpdir):
-		self.tmpdir = tmpdir
-		self.calPeaks(fileName)
+        #extract the first exon of each gene in the bed file
+        parsedBedName = getFirstExonBed(bed)
 
-	def calPeaks(self, fileName):
-		self.prefix = os.path.basename(fileName).split(".bam")[0]
-		CMD = "macs2 callpeak -q {0} -t {1} -n {2} --nomodel --nolambda --verbose=1".format(qScore,fileName,
-                                                                                                    self.tmpdir+"/"+self.prefix)
-		sp.call(CMD, shell=True)
-		logging.info("Peaks called for: {0}".format(fileName))
+        for peak in glob("{}/*_peaks.bed".format(peakdir)):
+            stage = path.basename(peak).replace("H3K4me3_","").replace(".bed","")
+            #Calculate the overlap count between peaks and bed genes
+            CMD = "bedtools intersect  -a {} -b {} | wc -l".format(peak, parsedBedName)
+            p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
+            count = p.stdout.readline().strip()
+           
+            #Calculate the total amount of peaks in the bed file
+            peakCount = getTotalPeakCount(peak)
 
-	def getPrefix(self):
-		return self.prefix
+            #writes output formatted to the outfile
+            line = [entryName, stage,count, peakCount]
+            outPut.write("\t".join(line)+"\n")
 
-	def getPath(self):
-		return self.tmpdir + "/" + self.prefix + "_peaks.bed"
+def getTotalPeakCount(path):
+    CMD = "cat {} | wc -l".format(path)
+    p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
+    return p.stdout.readline().strip()
 
-        def getPeakCount(self, name):
-                num = 0
-                out = sp.Popen("cat {0} | wc -l".format(name), shell=True, stdout=sp.PIPE)
-                for i in out.stdout:
-                        num = int(i)
-                logging.info("The amount of peaks = {0}".format(num))
-                return num
+"""
+This function extracts only the first exon from a bed entry and writes it to an output temp file.
+Intersection later on now guarantees that the peak will be matched with the gene start only.
+@bedFile The input bedfile in bed12 format
+"""
+def getFirstExonBed(bedFile):
+    temp = ntp(delete=False)
+    with open(bedFile) as inFile:
+        for line in inFile:
+            try:
+                line = line.strip().split("\t")
+                strand = line[5]
+                start = int(line[1])
+                end = int(line[2])
+                blocks = int(line[9])
+                blsizes = line[10].split(",")
+                blstarts = line[11].split(",")
+                if "+" in strand:
+                    newStart = start+int(blstarts[0])
+                    newEnd = newStart+int(blsizes[0])
+                elif "-" in strand:
+                    newStart = start+int(blstarts[blocks-1])
+                    newEnd = newStart+int(blsizes[blocks-1])
+                out = [line[0],str(newStart),str(newEnd)]
+                temp.write("\t".join(out)+"\n") #strings are not mutable so join is quicker
+            except:
+                print("pass")
+    temp.flush()
+    return temp.name
 
-def compare(peak, bed, outfile):
-	peakName = peak.tmpdir+"/"+peak.prefix+"_peaks.bed"
-	logging.info("comparing {0} with {1}".format(peakName, bed))
-        totalPeaks = peak.getPeakCount(peakName)
-	ranges = []
-	count=0
-	with open(bed) as f:
-		for line in f:
-			line=line.replace("\n","").split("\t")
-			l =[int(line[1]), int(line[2])]
-			ranges.append(line)
-	with open(peakName) as f:
-		for line in f:
-			try:
-				line = line.replace("\n","").split("\t")
-				start = int(line[1])-int(boundary)
-				stop = int(line[1])+int(boundary)
-				for i in ranges:
-					if i[5] == "+":
-						genStart = i[1]
-						genEnd = i[2]
-					else:
-						genStart= i[2]
-						genEnd = i[1]
-					if (start <= int(genStart) <= stop) or (start <= int(genEnd) <= stop):
-						count += 1
-			except IndexError:
-				pass
-        relativeCount = (count*100)/totalPeaks
-	logging.info("Writing count to outfile: {0}".format(relativeCount))
-	file = open(outfile,"a")
-	file.write(os.path.basename(bed).split(".bed")[0]+"\t"+
-                                        peak.prefix.replace("H3K4me3_","")+"\t"+str(relativeCount)+"\t"+
-                                        str(len(ranges))+"\n")
-def compareNcolor(peak, bed):
-        logging.info("comparing {0} with {1}".format(peak, bed))
-        ranges = []
-        with open(peak) as f:
-                for line in f:
-                        line=line.replace("\n","").split("\t")
-                        ranges.append(line)
-	with open(bed) as f:
-                for line in f:
-			done = False
-                        try:
-                                line = line.replace("\n","").split("\t")
-                                start = int(line[1])-int(boundary)
-                                stop = int(line[1])+int(boundary)
-                                for y,i in enumerate(ranges):
-					if not done:
-						if (start <= int(i[1]) <= stop) or (start <= int(i[2]) <= stop):
-							line[8] = "0,177,92"
-							print("\t".join(line))
-							done = True
-				if not done:
-					print("\t".join(line))
-                        except IndexError:
-                                pass
-
-def parseH3K4dir(h3k4dir):
-	tmpdir = tempfile.mkdtemp(prefix="peakGene.")
-	logging.info(tmpdir)
-	peakList = []
-	for file in glob.glob("{0}H3K4me3_*.bam".format(h3k4dir)):
-#	for file in ["/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9_2.bam", "/home/joris/Desktop/peakCity/peakFiles/H3K4me3_stage9.bam" ]:
-		peakList.append(Peak(file, tmpdir))
-	return peakList, tmpdir
-
-def parseBed(peakList, bedList, outfile):
-	for bed in bedList:
-		for peak in peakList:
-			compare(peak, bed, outfile)
-def colorBed(peakList, bedList):
-	outfile = tempfile.NamedTemporaryFile(delete = False)
-	combined = tempfile.NamedTemporaryFile(delete=True)
-	sort = tempfile.NamedTemporaryFile(delete=True)
-	logging.info("Merged file created: {}".format(outfile.name))
-	logging.info("Sorted file: {}".format(sort.name))
-	logging.info("combined file: {}".format(combined.name))
-	paths = []
-	if len(bedList) ==1:
-		for peak in peakList:
-			paths.append(peak.getPath())
-
-		combineCMD = "cat {} >> {}".format(" ".join(paths), combined.name)
-		sortCMD = "bedtools sort -i {} > {}".format(combined.name, sort.name)
-		mergeCMD = "bedtools merge -i {} > {}".format(sort.name, outfile.name)
-		sp.call(combineCMD, shell=True)
-		sp.call(sortCMD, shell=True)
-		sp.call(mergeCMD, shell=True)
-
-		compareNcolor(outfile.name, bedList[0])
-		combined.close()
-		sort.close()
-	else:
-		logging.warning("bed file in stdout will not be colored (more than 1 bed file provided")
-
-def prepOutfile():
-	file = open(outfile,"w")
-	file.write("bed\tpeak\th3\ttotal\n") #For peakCount output
-	print("track name=\"pitaRGB\" itemRgb=\"On\"" ) #For the colored bed file
-
-def close(tmpdir):
-	logging.info("Removing: {0}".format(tmpdir))
-	sp.call("rm -r {0}".format(tmpdir),shell = True)
-
-def argParse():
-	p = argparse.ArgumentParser()
-	p.add_argument("-p", dest="peakdir", help="Directory with H3K4me4 bam files", required = True)
-	p.add_argument("-b", dest="bedFiles", nargs="+", help="Space seperated list of bed files to use. Minimum is 1, however the result of this would not be informative", required = True)
-	p.add_argument("-o", dest="outfile", help="Output data file", required = True)
-	return p.parse_args()
-
+"""
+Starting the program
+"""
 if __name__ == "__main__":
-	tmpdir = ""
-	args = argParse()
-	H3K4dir = args.peakdir
-	bedList = args.bedFiles
-	outfile = args.outfile
-	try:
-		peakList, tmpdir = parseH3K4dir(H3K4dir)
-		prepOutfile()
-		parseBed(peakList, bedList, outfile)
-		colorBed(peakList, bedList)
-		close(tmpdir)
-        except KeyboardInterrupt:
-		close(tmpdir)
-
+    args = parseArgs()
+    parseBedFiles(args.bedFiles, args.peakdir, args.outfile)
 
 
