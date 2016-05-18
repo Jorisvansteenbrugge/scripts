@@ -22,6 +22,7 @@ def parseArgs():
 
 """
 where the magic happens. 
+This method does the main work, see in-line comments for more info.
 """
 def parseBedFiles(bedFiles, peakdir, outfile):
     outPut = open(outfile,"w")
