@@ -3,8 +3,8 @@ import sqlite3 as sql
 import sys
 
 dbFile = sys.argv[1]
-range = 1000
-class DB:
+boundary = 1000
+class DB(object):
     cursor = None
     
     def __init__(self):
@@ -23,13 +23,13 @@ class DB:
             end = line[2]
             strand = line[5]
 
-            betweenstatement = "SELECT id FROM feature WHERE chrom='{0}' AND start BETWEEN'{1}' AND '{2}' AND end BETWEEN '{3}' AND '{4}' AND strand='{5}'".format(chrom,int(start)-range,int(start)+range,int(end)-range, int(end)+range, strand)
+            between = "SELECT id FROM feature WHERE chrom='{0}' AND start BETWEEN'{1}' AND '{2}' AND end BETWEEN '{3}' AND '{4}' AND strand='{5}'"
+            between = between.format(chrom,int(start)-boundary,int(start)+boundary,int(end)-boundary, int(end)+boundary, strand)
 
-            self.cursor.execute(betweenstatement)
+            self.cursor.execute(between)
 
             rows = self.cursor.fetchall()
-            id = rows[0][0]
-            return id
+            return rows[0][0]
             #return self.getName(id)
             
     def getName(self,id):
@@ -54,10 +54,10 @@ with open(bed) as f:
             for x,y in enumerate(blSizes):
                 try:
                     size = int(y)
-                    chr  = line[0]
+                    chrom  = line[0]
                     st   = start+int(blStarts[x])
                     end  = st+size
-                    ids.append(database.search(chr,st,end,line[5]))
+                    ids.append(database.search(chrom,st,end,line[5]))
                 except:
                     pass
             ids = list(set(ids))
