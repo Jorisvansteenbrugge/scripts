@@ -13,8 +13,8 @@ LEN = len(sys.argv) - 1
 for i in range(0,LEN,1):
 	count = 1
 	fname = sys.argv[i+1]
-	file = open(fname)
-	for line in file:
+	inFile = open(fname)
+	for line in inFile:
 		if count > 5:
 			print(line)
 
