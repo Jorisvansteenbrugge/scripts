@@ -1,4 +1,9 @@
+#!/usr/bin/env python
+#author Joris van Steenbrugge
+#since March 11
+#Function: Combines multiple psl files into a single one
 import sys
+
 HEADER = open("blatHeader.psl")
 for i in HEADER:
 	print(i)

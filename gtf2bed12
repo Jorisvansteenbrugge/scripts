@@ -1,9 +1,14 @@
 #!/usr/bin/env python
+#Author: Joris van Steenbrugge
+#Since: April 11
+#Function: Converts a gtf file into a bed12 file
+################################################
 import sys
 from abc import ABCMeta, abstractmethod
 
 inputFile =  sys.argv[1]
 
+#Abstart class Entry (either an Exon or a Transcript)
 class Entry(object):
 	__metaclass__ = ABCMeta
         start = None
@@ -14,6 +19,7 @@ class Entry(object):
         frame = None    
         attribute = None 	
 
+#Inherited from Entry class.
 class Exon(Entry):
 
 	def __init__(self,start,stop,score):
@@ -26,7 +32,7 @@ class Exon(Entry):
 
 	def getStart(self):
 		return self.start
-
+#Inherited from Transcript
 class Transcript(Entry):
 	exons = None
 	bedline = None
@@ -59,7 +65,9 @@ class Transcript(Entry):
 		for i in self.exons:
 			out.append(str(i.getStart()-self.start))
 		return ",".join(out)
-
+	"""
+	Converts the transcript alongside with all exons to bed 12 format 
+	"""
 	def toBed12(self):
 		self.bedline.append(self.Chr)
 		self.bedline.append(str(self.start))

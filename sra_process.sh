@@ -1,6 +1,6 @@
 #!/bin/bash
-# Bash script to download a bunch of *.sra files from the NCBI SRA, using 
-#apsera
+# Bash script to download multiple *.sra files from the NCBI SRA, using apsera
+
 
 max_bandwidth_mbps=50
 

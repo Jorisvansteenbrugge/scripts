@@ -4,5 +4,4 @@ outf=$(basename $1 .bam).sam
 samtools view -H $1 -> $outf
 samtools view $1 | ~/tools/bioawk-master/bioawk -t '{$10="*";$11="*";print}' >> $outf
 samtools view -Sb $outf  > ./$2
-
 rm $outf

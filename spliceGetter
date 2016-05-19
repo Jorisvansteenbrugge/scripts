@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# DEPRECATED
+#Author: Joris van Steenbrugge
+#Since: March 2
+#Function: Extracts splice sites from bam or bed files and counts the occurences
+
 import sys
 import subprocess as sp
 import os
@@ -6,19 +11,25 @@ from multiprocessing import Pool
 
 outfile = None
 
-
+"""
+If a bam file is detected, convert it to bed format
+"""
 def bamfile(path,base):
         print("Converting bam file to bed file")
         bed = base+".bed"
         sp.call("bedtools bamtobed -bed12 -i "+path+" > "+bed, shell=True)
         file = open(bed)
         bedfile(file)
-
+"""
+If bed file is detected, call the spliceFromLine function for every line in the file
+"""
 def bedfile(file):
 	print("processing bed file")
-	[spliceFromLine(i) for i in file]
+	[spliceFromLine(line) for line in file]
 
-
+"""
+Parses a bed12 format line and extract the splice sites
+"""
 def spliceFromLine(i):
 	global outfile
 	t ="\t"
