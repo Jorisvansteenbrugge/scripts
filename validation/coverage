@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 from math import log
 import sys
@@ -95,7 +96,7 @@ def getRPKM(totalReads, avgFile):
 
 def paste():
         print("RPKM files: {0}".format(" ".join(rpkmFiles)))
-        outfileName = "swagboxPlotData.tsv"
+        outfileName = "/home/jsteenbrugge/swagboxPlotData.tsv"
         output = open(outfileName,"w")
 	output.write('\"Name\"\t\"RPKM log2\"\n')
 	for i in rpkmFiles:
@@ -111,7 +112,7 @@ def cleanUp(outfiles):
 
 if __name__ == "__main__":
 	if len(sys.argv) <2:
-		print("Usage: coverage.py <bamDir> [bed1, bed2, bed3]")
+		print("Usage: coverage <bamDir> [bed1, bed2, bed3]")
 		sys.exit(1)
 
 	bedFiles = sys.argv[2:]
