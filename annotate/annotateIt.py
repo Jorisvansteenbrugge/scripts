@@ -4,12 +4,9 @@ from Bio import SeqIO
 from sys import argv
 from tempfile import NamedTemporaryFile as namedTemp
 import subprocess as sp
-import logging
-
-logger = logging.getLogger("annotate")
 
 def parseFasta():
-    outfile = open(argv[2],"w")
+#    outfile = open(argv[2],"w")
     fasta_seqs = SeqIO.parse(open(argv[1]),"fasta")
     count = 0
 
@@ -19,9 +16,10 @@ def parseFasta():
             name, seq = fasta.id, str(fasta.seq)
             query.write(">{}\n{}".format(name,seq))
             query.flush()
-            logger.info("Blasting {}".format(name))
-            newName = annotateSeq(query.name)
-            logger.info("Old: {}  -- New: {}".format(name, newName))
+            if annotateSeq(query.name):
+		continue
+	    else:
+		break
         else:
             return True
         count+=1
@@ -31,6 +29,7 @@ def annotateSeq(queryFile):
     resultFile = namedTemp()
     CMD = "blastn -db nt -query {} -out {} -remote".format(queryFile, resultFile.name)
     sp.call(CMD,shell=True)
+    return 0
     
     
 
