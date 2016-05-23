@@ -17,9 +17,9 @@ def parseFasta():
             query.write(">{}\n{}".format(name,seq))
             query.flush()
             if annotateSeq(query.name):
-		continue
-	    else:
-		break
+                continue
+            else:
+                break
         else:
             return True
         count+=1
