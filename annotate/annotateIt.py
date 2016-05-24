@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from Bio import SeqIO
-from sys import argv
 from tempfile import NamedTemporaryFile as namedTemp
 import subprocess as sp
 import argparse
@@ -34,7 +33,7 @@ def parseFasta(fastaF,outF, bed):
                 resultFile = annotateSeq(query.name)
             
                 print("result file")
-                pos, refID = getBestResult(resultFile)
+                refID = getBestResult(resultFile)
                 if refID != "":
                     outfile.write("\t".join(improveBed(refID, intersectLine))+"\n")
                     print("Something happened")
@@ -80,18 +79,15 @@ def improveBed(refID, line):
 
 def getBestResult(resultFile):
     print("best result")
-    pos = ""
     refID = ""
     with open(resultFile) as inf:
         for line in inf:
-            if "Query=" in line and pos=="":
-                pos = line.split("= ")[1].strip()
-            elif "ref|" in line:
+            if "ref|" in line:
                 refID = line.split("|")[1]
             elif "gb|" in line:
                 refID = line.split("|")[1]
             if pos != "" and refID != "":
-                return pos, refID
+                return refID
 
     
 def parseArgs():
