@@ -86,7 +86,7 @@ def getBestResult(resultFile):
                 refID = line.split("|")[1]
             elif "gb|" in line:
                 refID = line.split("|")[1]
-            if pos != "" and refID != "":
+            if refID != "":
                 return refID
 
     
