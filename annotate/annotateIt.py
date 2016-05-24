@@ -19,22 +19,29 @@ def parseFasta(fastaF,outF, bed):
         print("fasta found")
         if count < 2:
             name, seq = fasta.id, str(fasta.seq)
-            seqout = ">{}\n{}\n".format(name,seq)
-            print(seqout)
-            print(query.name)
-            query.write(seqout)
-            query.flush()
+
+            intersectLine = checkIntersect(name, bed)
             
-            #calling the blastp program. Resulting in the file with the blast results
-            resultFile = annotateSeq(query.name)
+            if intersectLine != "":
+                print("Interline: "+intersectLine)
+                seqout = ">{}\n{}\n".format(name,seq)
+                print(seqout)
+                print(query.name)
+                query.write(seqout)
+                query.flush()
+
+                #calling the blastp program. Resulting in the file with the blast results
+                resultFile = annotateSeq(query.name)
             
-            print("result file")
-            pos, refID = getBestResult(resultFile)
-            if refID != "":
-                outfile.write("\t".join(improveBed(pos,refID, bed))+"\n")
-                print("Something happened")
+                print("result file")
+                pos, refID = getBestResult(resultFile)
+                if refID != "":
+                    outfile.write("\t".join(improveBed(refID, intersectLine))+"\n")
+                    print("Something happened")
+                else:
+                    print("No ID found, Passed")
             else:
-                print("Passed")
+                print("No intersection found, skipping blast")
         else:
             return True
         count+=1
@@ -47,8 +54,8 @@ def annotateSeq(queryFile):
     print(resultFile.name)
     return resultFile.name
 
-def improveBed(pos, refID,bed):
-    print("improve")
+
+def checkIntersect(pos, bed):
     bedPos = pos.replace(":","\t")
     bedPos = bedPos.replace("-","\t")
     bedPos = bedPos.replace("_","")
@@ -60,9 +67,14 @@ def improveBed(pos, refID,bed):
     CMD = "bedtools intersect -a {} -b {}".format(bed,interFile.name)
     handle = sp.Popen(CMD,shell=True,stdout=sp.PIPE)
     line = handle.stdout.readline().strip()
-    line = line.split("\t")
+    return line
 
-        
+def improveBed(refID, line):
+    print("improve")
+    line = line.split("\t")
+ 
+    print(line)
+    print("refID : "+refID)
     line[3] = refID
     return line
 
@@ -74,7 +86,7 @@ def getBestResult(resultFile):
         for line in inf:
             if "Query=" in line and pos=="":
                 pos = line.split("= ")[1].strip()
-            elif "ref|" in line and "XP_" not in line:
+            elif "ref|" in line:
                 refID = line.split("|")[1]
             elif "gb|" in line:
                 refID = line.split("|")[1]
