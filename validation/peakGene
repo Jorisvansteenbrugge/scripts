@@ -33,6 +33,9 @@ def parseBedFiles(bedFiles, peakdir, outfile):
 
         #extract the first exon of each gene in the bed file
         parsedBedName = getFirstExonBed(bed)
+        
+        #Calculate the total amount of genes in the bed file
+        geneCount = getTotalGeneCount(bed)
 
         for peak in glob("{}/*_peaks.bed".format(peakdir)):
             stage = path.basename(peak).replace("H3K4me3_","").replace(".bed","")
@@ -41,14 +44,13 @@ def parseBedFiles(bedFiles, peakdir, outfile):
             p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
             count = p.stdout.readline().strip()
            
-            #Calculate the total amount of peaks in the bed file
-            peakCount = getTotalPeakCount(peak)
+    
 
             #writes output formatted to the outfile
-            line = [entryName, stage,count, peakCount]
+            line = [entryName, stage,count, geneCount]
             outPut.write("\t".join(line)+"\n")
 
-def getTotalPeakCount(path):
+def getTotalGeneCount(path):
     CMD = "cat {} | wc -l".format(path)
     p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
     return p.stdout.readline().strip()

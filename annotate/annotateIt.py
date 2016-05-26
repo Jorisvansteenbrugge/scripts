@@ -4,7 +4,7 @@ from Bio import SeqIO
 from tempfile import NamedTemporaryFile as namedTemp
 import subprocess as sp
 import argparse
-
+import urllib
 
 
 
@@ -33,9 +33,10 @@ def parseFasta(fastaF,outF, bed):
                 resultFile = annotateSeq(query.name)
             
                 print("result file")
-                refID = getBestResult(resultFile)
-                if refID != "":
-                    outfile.write("\t".join(improveBed(refID, intersectLine))+"\n")
+                refID = getProtID(resultFile)
+                if refID != "" and refID != None:
+                    geneSymbol = getGeneSymbol(refID)
+                    outfile.write("\t".join(improveBed(geneSymbol, intersectLine))+"\n")
                     print("Something happened")
                 else:
                     print("No ID found, Passed")
@@ -46,14 +47,28 @@ def parseFasta(fastaF,outF, bed):
         count+=1
         query.close()
 
+"""
+Uses REST to convert refseq id's to geneSymbols
+"""
+def getGeneSymbol(refID):
+    url = 'http://biodbnet-abcc.ncifcrf.gov/webServices/rest.php/biodbnetRestApi.xml?'
+    url +='method=db2db&format=row&input=genesymbol&inputValues={0}&outputs=geneSymbol'.format(refID)
+    u = urllib.urlopen(url)
+    response = u.read()
+    print(response)
+    return response.split("<GeneSymbol>")[1].split("</GeneSymbol>")[0] #No fancy xml parsing going on here
+
 def annotateSeq(queryFile):
     resultFile = namedTemp(delete=False)
-    CMD = "blastp -db nr -query {} -out {} -remote".format(queryFile, resultFile.name)
+    CMD = "blastp -db nr -query {} -out {}  -remote".format(queryFile, resultFile.name)
     sp.call(CMD,shell=True)
     print(resultFile.name)
     return resultFile.name
 
-
+"""
+Checks if the protein coordinates are present somewhere in the bed file. 
+If not, the program skips the slow blast process.
+"""
 def checkIntersect(pos, bed):
     bedPos = pos.replace(":","\t")
     bedPos = bedPos.replace("-","\t")
@@ -68,16 +83,12 @@ def checkIntersect(pos, bed):
     line = handle.stdout.readline().strip()
     return line
 
-def improveBed(refID, line):
-    print("improve")
-    line = line.split("\t")
- 
-    print(line)
-    print("refID : "+refID)
-    line[3] = refID
+def improveBed(geneSym, line):
+    line = line.split("\t") 
+    line[3] = geneSym
     return line
 
-def getBestResult(resultFile):
+def getProtID(resultFile):
     print("best result")
     refID = ""
     with open(resultFile) as inf:

@@ -57,7 +57,6 @@ def getExonFiles(bedLine, outfile):
         except:
             pass
     outfile.flush()
-    outfile.close()
 
 """
 filters the line from the bedtools intersect output into 2 seperate bed12 lines.
@@ -66,13 +65,15 @@ These Lines are finally send to miniIntersect() which intersects the exons for e
 def getExonOverlap(line, tpFile):
     exons1 = tp.NamedTemporaryFile(delete=False)
     exons2 = tp.NamedTemporaryFile(delete=False)
+    exons1.close()
+    exons2.close()
+
     line = line.strip().split("\t")
     bed1 = line[0:12]
+    print("bed1 :"+"\t".join(bed1))
     bed2 = line[12:24]
     getExonFiles(bed1, exons1.name)
     getExonFiles(bed2, exons2.name)
-    exons1.seek(0)
-    exons2.seek(0)
     return miniIntersect(exons1.name, exons2.name)
 
 """
@@ -82,7 +83,6 @@ The output is send to the exonOverlap method
 def normalIntersect(a, b, tpFile):
     temp = open(tpFile,"a")
     aeds = []
-    append = aeds.append
     cmd = "bedtools intersect -wo -a {0} -b {1}".format(a,b)
     out = sp.Popen(cmd, shell = True, stdout = sp.PIPE)
     aeds.append([str(getExonOverlap(i,tpFile)) for i in out.stdout])
@@ -107,20 +107,15 @@ def createJobs(annotation,data, deltemp):
         print(dat)
         for anno in annotation:
             tpFile = tp.NamedTemporaryFile(delete=False)
+
+            #used for better output formatting
             tpFile.write("\"{0}\"\n".format(anno.replace(".bed","")))
             tpFile.flush()
+            
             tmpfiles.append(tpFile.name)
             normalIntersect(anno, dat,tpFile.name)
-        aedFilename = ""
-        temp = None
-        if deltemp:
-            temp = tp.NamedTemporaryFile(delete=True)
-            aedFileName = temp.name
-        else:
-            aedFileName = "intermediate_{}".format(finaloutfile)
+        aedFileName = "intermediate_{}".format(finaloutfile)
         sp.call("paste {0} > {1}".format(" ".join(tmpfiles), aedFileName),shell=True)
-        sp.call("echo \"{0}\" > {1}; Rscript /home/jsteenbrugge/tools/scripts/signiCheck.R {2} | sed 's/\[1\] //g' >> {3}".format(
-                                                                           dat, finaloutfile, aedFileName, finaloutfile), shell=True)
         try:
             print(temp.name)
             #cleanUp(tmpfiles)
