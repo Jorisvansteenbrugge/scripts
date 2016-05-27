@@ -4,6 +4,6 @@ rule utr:
 		bed=lambda wildcards: config["bedfiles"][wildcards.sample],
 		bams=expand("{bam}", bam=bamfiles)
 	output:
-		"{bed}_utrExtended.bed"
+		"{sample}_utrExtended.bed"
 	shell:
 		"pita_utr -i {input.bed} -b {input.bams}  > {output}"
