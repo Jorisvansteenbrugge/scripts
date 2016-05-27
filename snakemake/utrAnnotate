@@ -1,10 +1,9 @@
-
-rule pita_utr:
+bamfiles = ["ClutchA_polyA_0.5_hpf","ClutchA_polyA_4_hpf"]
+rule utr:
 	input:
-		bed=lambda wildcards: config["bedfiles"][wildcards.sample]
-		bam=expand({bam}.bam, bam=config["bamfiles"])
+		bed=lambda wildcards: config["bedfiles"][wildcards.bed],
+		bams=expand("/home/jsteenbrugge/data/bamFiles/bamPolyA_CA/{bam}.bam", bam=bamfiles)
 	output:
-		"{sample}_utrExtended.bed"
+		"{bed}_utrExtended.bed"
 	shell:
-		"pita_utr -i {input.bed} -b {input.bam} > {sample}_utrExtended.bed"
-
+		"pita_utr -i {input.bed} -b {input.bams}  > {output}"
