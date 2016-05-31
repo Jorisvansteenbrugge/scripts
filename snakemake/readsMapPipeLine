@@ -1,0 +1,76 @@
+#configfile: "config.yaml"
+
+rule all:
+	input: 
+		expand("sorted_reads/{sample}.bam.bai", sample=config["samples"])
+
+rule fastqdump:
+	input:
+		lambda wildcards: config["samples"][wildcards.sample]
+	output:
+		temp("fastq/{sample}_1.fastq"),
+		temp("fastq/{sample}_2.fastq")
+	params:
+		x="1000",#testing purposes, only reads 1000 spots this way
+		o="fastq/"
+	log:
+		"logs/fastqdump/{sample}.log"
+	shell:
+		"(fastq-dump {input} -X {params.x} -O {params.o} --split-files) 2> {log}"
+		
+rule hisat:
+	input:
+		"fastq/{sample}_1.fastq",
+		"fastq/{sample}_2.fastq"
+	output:
+		temp("mapped_reads/{sample}.bam")
+	threads: 8
+	benchmark:
+		"benchmarks/{sample}.hisat.benchmark.txt"
+	params:
+		i=config["index"]
+	log:
+		"logs/hisat/{sample}.log"
+	shell:
+		"(hisat2 --very-fast -p {threads} -q -x {params.i} -1 {input} | samtools view -Sb - > {output}) 2> {log}"
+
+rule samtools_sort:
+	input:
+		"mapped_reads/{sample}.bam"
+	output:
+		"sorted_reads/{sample}.bam"
+	params:
+		m="12G"
+	shell:
+		"samtools sort -m {params.m} -T sorted_reads/{wildcards.sample} -O bam {input} > {output}"
+
+rule samtools_index:
+	input:
+		"sorted_reads/{sample}.bam",
+	output:
+		"sorted_reads/{sample}.bam.bai",
+	shell:
+		"samtools index {input}"
+
+rule default_bam:
+	input:
+		"sorted_reads/{sample}.bam"
+	output:
+		"default_bam/{sample}.bam"
+	shell:
+		"bam2default {input} {output}"
+
+rule bam2bw:
+	input:
+		"sorted_reads/{sample}.bam"
+	output:
+		"bigWiggle/{sample}.bw"
+	shell:
+		"bam2bw -D -S -i {input} -o {output}"
+
+rule report:
+	output:
+		"report.html"
+	run:
+		from snakemake.utils import report
+		report("""The sra process workflow used in the pita run.\n==============================================\nReads were mapped to the X. tropicalis reference genome xt9_0 using hisat2. \nSorted bam files were created using Samtools. Optionally, the sequences and quality scores in the bam files can be set to default (i.e. *) to save precious disk space """,output[0], metadata="Author: Joris van Steenbrugge (jorisvsteenbrugge@gmail.com)")

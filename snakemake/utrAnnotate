@@ -1,0 +1,9 @@
+bamfiles = ["/home/joris/data/xtropBam/ClutchA_polyA_20_hpf.bam", "/home/joris/data/xtropBam/ClutchA_polyA_66_hpf.bam"]
+rule utr:
+	input:
+		bed=lambda wildcards: config["bedfiles"][wildcards.sample],
+		bams=expand("{bam}", bam=bamfiles)
+	output:
+		"{sample}_utrExtended.bed"
+	shell:
+		"pita_utr -i {input.bed} -b {input.bams}  > {output}"
