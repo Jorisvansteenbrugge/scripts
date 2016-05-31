@@ -8,7 +8,11 @@ rule getFasta:
 		bed=lambda wildcards: config["bedfiles"][wildcards.sample]
 
 	output:
+<<<<<<< HEAD
 		"{sample}.fa"
 	threads: 1
+=======
+		"{sample}_utrExtended.bed"
+>>>>>>> 7bd3fb3c40ef7820f79826dcab8dbb9d10833ae1
 	shell:
 		"bedtools getfasta -split -s -fi {REF} -bed {input.bed} -fo {output} "
