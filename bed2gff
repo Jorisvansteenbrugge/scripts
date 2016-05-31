@@ -25,7 +25,7 @@ class Gene():
 		#printint the exons
 		for i in range(blockCount):
 			exonStart = start+ int(blockStarts[i])  
-			stop = start + exonStart + int(blockSizes[i])
+			stop = exonStart + int(blockSizes[i])
 			print("{}\t.\texon\t{}\t{}\t.\t{}\t.\tID=exon{};Parent=gene{}".format(chrom,str(exonStart),str(stop),strand,str(i+1),str(count)))
 
 		count += 1
