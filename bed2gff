@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+import fileinput
+
+count = 1
+class Gene():
+	def __init__(self, line):
+		self.bedLine = line
+
+	def toGFF(self):
+		global count
+		chrom = self.bedLine[0]
+		start = int(self.bedLine[1]) + 1
+		stop = int(self.bedLine[2])
+		name = self.bedLine[3]
+
+		strand = self.bedLine[5]
+		blockCount = int(self.bedLine[9])
+		blockSizes  = self.bedLine[10].split(",")
+		blockStarts = self.bedLine[11].split(",")
+
+		#printing the gene parent
+		print("{}\t.\tgene\t{}\t{}\t.\t{}\t.\tID=gene{};Name={}".format(chrom,str(start),str(stop),strand,str(count),name))
+	
+
+		#printint the exons
+		for i in range(blockCount):
+			exonStart = start+ int(blockStarts[i])  
+			stop = start + exonStart + int(blockSizes[i])
+			print("{}\t.\texon\t{}\t{}\t.\t{}\t.\tID=exon{};Parent=gene{}".format(chrom,str(exonStart),str(stop),strand,str(i+1),str(count)))
+
+		count += 1
+
+if __name__ == "__main__":
+	for line in fileinput.input():
+		gene = Gene(line.strip().split("\t"))
+		gene.toGFF()
