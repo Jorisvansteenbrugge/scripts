@@ -1,9 +1,14 @@
-bamfiles = ["/home/joris/data/xtropBam/ClutchA_polyA_20_hpf.bam", "/home/joris/data/xtropBam/ClutchA_polyA_66_hpf.bam"]
-rule utr:
+REF = config["refGen"]
+rule all:
 	input:
-		bed=lambda wildcards: config["bedfiles"][wildcards.sample],
-		bams=expand("{bam}", bam=bamfiles)
+		"pitaUtr.fa"
+
+rule getFasta:
+	input:
+		bed=lambda wildcards: config["bedfiles"][wildcards.sample]
+
 	output:
-		"{bed}_utrExtended.bed"
+		"{sample}.fa"
+	threads: 1
 	shell:
-		"pita_utr -i {input.bed} -b {input.bams}  > {output}"
+		"bedtools getfasta -split -s -fi {REF} -bed {input.bed} -fo {output} "
