@@ -10,7 +10,7 @@ class Gene():
 		global count
 		chrom = self.bedLine[0]
 		start = int(self.bedLine[1]) + 1
-		stop = int(self.bedLine[2])
+		stop = int(self.bedLine[2]) + 1
 		name = self.bedLine[3]
 
 		strand = self.bedLine[5]
@@ -19,14 +19,16 @@ class Gene():
 		blockStarts = self.bedLine[11].split(",")
 
 		#printing the gene parent
+
 		print("{}\t.\tgene\t{}\t{}\t.\t{}\t.\tID=gene{};Name={}".format(chrom,str(start),str(stop),strand,str(count),name))
+		print("{0}\t.\tmRNA\t{1}\t{2}\t.\t{3}\t.\tID=mRNA{4};Name={5}.mRNA;Parent=gene{4}".format(chrom,str(start),str(stop),strand,str(count),name))
 	
 
 		#printint the exons
 		for i in range(blockCount):
 			exonStart = start+ int(blockStarts[i])  
 			stop = exonStart + int(blockSizes[i])
-			print("{}\t.\texon\t{}\t{}\t.\t{}\t.\tID=exon{};Parent=gene{}".format(chrom,str(exonStart),str(stop),strand,str(i+1),str(count)))
+			print("{}\t.\tCDS\t{}\t{}\t.\t{}\t.\tID=gene{}.exon{};Parent=mRNA{}".format(chrom,str(exonStart),str(stop),strand,str(count),str(i+1),str(count)))
 
 		count += 1
 
