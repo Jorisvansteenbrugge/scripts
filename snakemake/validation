@@ -2,7 +2,9 @@
 #Assumes the following scripts are added to the user's path: peakGene, barplot.R
 #configfile required with the following entries in yaml format:
 # bedfiles, peakfile
+
 beds = config["bedfiles"]
+bams = config["bamfiles"]
 rule all:
     input:
         "H3K4vsBed.tsv"
@@ -24,4 +26,12 @@ rule boxplot:
     threads:1
     shell:
         "barplot.R {input} {output}"
-    
+
+rule rpkm:
+    input:
+        bed=expand("{sample}.bed", sample=beds),
+        bam=expand("{sample}.bam", sample=bams)
+    output:
+        "test.txt"
+    shell:
+        "rpkmCalc -bam {input.bam} -bed {input.bed} -o {output}"
