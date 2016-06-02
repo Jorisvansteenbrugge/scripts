@@ -1,13 +1,14 @@
 library(ggplot2)
 
-df= read.table("/home/joris/data/outfiletest2.tsv", header = TRUE, fill = TRUE)
+
+df <- read.table("/home/joris/data/outfiletest2.tsv", header = TRUE, fill = TRUE)
 
 
 
 df$RPKM.log2 = log(df$RPKM.log2,2)
 
 #df = df[is.finite(df$RPKM.log2),]
-order = c("xenbase","pita", "xlaevisMRNA13", "xtrop_mRNA", "stringtie","xlaevis_EST", "xtrop_EST")
+order <- c("xenbase","pita", "xlaevisMRNA13", "xtrop_mRNA", "stringtie","xlaevis_EST", "xtrop_EST")
 df$Name <- factor(df$Name, levels = order)
 
 ggplot(data=df,aes(x=Name,y=RPKM.log2, fill=Name)) + 

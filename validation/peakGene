@@ -36,9 +36,16 @@ def parseBedFiles(bedFiles, peakdir, outfile):
         
         #Calculate the total amount of genes in the bed file
         geneCount = getTotalGeneCount(bed)
+        
 
-        for peak in glob("{}/*_peaks.bed".format(peakdir)):
+        peakFiles = []
+        if peakdir.endswith(".bed"):
+            peakFiles.append(peakdir)
+        else:
+            peakFiles = glob("{}/*_peaks.bed".format(peakdir))
+        for peak in peakFiles:
             stage = path.basename(peak).replace("H3K4me3_","").replace(".bed","")
+            
             #Calculate the overlap count between peaks and bed genes
             CMD = "bedtools intersect  -a {} -b {} | wc -l".format(peak, parsedBedName)
             p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
@@ -47,8 +54,9 @@ def parseBedFiles(bedFiles, peakdir, outfile):
     
 
             #writes output formatted to the outfile
-            line = [entryName, stage,count, geneCount]
-            outPut.write("\t".join(line)+"\n")
+            line = [entryName, stage, count.decode('ascii') , geneCount.decode('ascii') ]
+            outLine = "\t".join(line)+"\n"
+            outPut.write(outLine)
 
 def getTotalGeneCount(path):
     CMD = "cat {} | wc -l".format(path)
@@ -61,27 +69,28 @@ Intersection later on now guarantees that the peak will be matched with the gene
 @bedFile The input bedfile in bed12 format
 """
 def getFirstExonBed(bedFile):
-    temp = ntp(delete=False)
+    temp = ntp(delete=False,mode="w")
     with open(bedFile) as inFile:
         for line in inFile:
-            try:
-                line = line.strip().split("\t")
-                strand = line[5]
-                start = int(line[1])
-                end = int(line[2])
-                blocks = int(line[9])
-                blsizes = line[10].split(",")
-                blstarts = line[11].split(",")
-                if "+" in strand:
-                    newStart = start+int(blstarts[0])
-                    newEnd = newStart+int(blsizes[0])
-                elif "-" in strand:
-                    newStart = start+int(blstarts[blocks-1])
-                    newEnd = newStart+int(blsizes[blocks-1])
-                out = [line[0],str(newStart),str(newEnd)]
-                temp.write("\t".join(out)+"\n") #strings are not mutable so join is quicker
-            except:
-                print("pass")
+            line = line.strip().split("\t")
+            strand = line[5]
+            start = int(line[1])
+            end = int(line[2])
+            blocks = int(line[9])
+            blsizes = line[10].split(",")
+            blstarts = line[11].split(",")
+            if "+" in strand:
+                newStart = start+int(blstarts[0])
+                newEnd = newStart+int(blsizes[0])
+            elif "-" in strand:
+                newStart = start+int(blstarts[blocks-1])
+                newEnd = newStart+int(blsizes[blocks-1])
+            out = [line[0],str(newStart),str(newEnd)]
+            
+            #try:
+            temp.write("\t".join(out)+"\n") #strings are not mutable so join is quicker
+            #except:
+             #   print("pass")
     temp.flush()
     return temp.name
 
@@ -91,5 +100,10 @@ Starting the program
 if __name__ == "__main__":
     args = parseArgs()
     parseBedFiles(args.bedFiles, args.peakdir, args.outfile)
-
-
+else:
+    bed = snakemake.input[0]
+    if isinstance(bed, str):
+        bedFiles = [bed]
+    else:
+        bedFiles= bed
+    parseBedFiles(bedFiles, snakemake.input[1], snakemake.output[0])

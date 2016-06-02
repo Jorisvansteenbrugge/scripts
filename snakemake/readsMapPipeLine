@@ -11,12 +11,11 @@ rule fastqdump:
 		temp("fastq/{sample}_1.fastq"),
 		temp("fastq/{sample}_2.fastq")
 	params:
-		x="1000",#testing purposes, only reads 1000 spots this way
 		o="fastq/"
 	log:
 		"logs/fastqdump/{sample}.log"
 	shell:
-		"(fastq-dump {input} -X {params.x} -O {params.o} --split-files) 2> {log}"
+		"(fastq-dump {input} -O {params.o} --split-files) 2> {log}"
 		
 rule hisat:
 	input:
@@ -24,7 +23,7 @@ rule hisat:
 		"fastq/{sample}_2.fastq"
 	output:
 		temp("mapped_reads/{sample}.bam")
-	threads: 8
+	threads: 12
 	benchmark:
 		"benchmarks/{sample}.hisat.benchmark.txt"
 	params:
@@ -38,7 +37,7 @@ rule samtools_sort:
 	input:
 		"mapped_reads/{sample}.bam"
 	output:
-		"sorted_reads/{sample}.bam"
+		protected("sorted_reads/{sample}.bam")
 	params:
 		m="12G"
 	shell:
