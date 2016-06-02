@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #Assumes the following scripts are added to the user's path: peakGene, barplot.R
+#configfile required with the following entries in yaml format:
+# bedfiles, peakfile
 beds = config["bedfiles"]
 rule all:
     input:
