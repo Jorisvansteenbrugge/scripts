@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+#Assumes the following scripts are added to the user's path: peakGene, barplot.R
+beds = config["bedfiles"]
+rule all:
+    input:
+        "H3K4vsBed.tsv"
+rule peak_Gene:
+    input: 
+        beds=expand("{sample}.bed", sample=beds),
+        peakdir=config["peakfile"]
+    output: 
+        "H3K4vsBed.tsv"
+    threads: 1
+    shell:
+        "peakGene -p {input.peakdir} -b {input.beds} -o {output}"
+
+rule boxplot:
+    input:
+        "H3K4vsBed.tsv"
+    output:
+        "H3K4vsBed.pdf"
+    threads:1
+    shell:
+        "barplot.R {input} {output}"
+    
