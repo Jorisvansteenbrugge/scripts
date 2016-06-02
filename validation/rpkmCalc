@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+#bedtools coverage op 1 of meerder bam files, average coverage per gen.
+from tempfile import NamedTemporaryFile as ntp
+from os import path
+import subprocess as sp
+import argparse
+
+bamstats = {}
+
+def argParsing():
+    p = argparse.ArgumentParser()
+    p.add_argument("-bam", dest="bamFiles", nargs="+", help="Space seperated list of RNA-seq bam files", required = True)
+    p.add_argument("-bed", dest="bedFiles", nargs="+", help="Space seperated list of bed files to use. Minimum is 1, however the result of this would not be informative ;)", required = True)
+    p.add_argument("-o", dest="outfile", help="Output data file", required = True)
+    return p.parse_args()
+
+
+def getBamReads(bam):
+    CMD = "samtools flagstat {}".format(bam)
+    out = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
+
+    #niet het allermooist misschien maar het werkt
+    return int(out.stdout.readline().strip().decode('ascii').split(" + ")[0])
+    
+def getCoverage(bed,bam, dic):
+    CMD = "bedtools coverage -abam {} -b {} -counts -d".format(bam, bed)
+    out = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
+    for i in out.stdout:
+        asList = i.decode('ascii').strip().split("\t")#decode is for python3 support
+        posKey = "-".join(asList[0:3])
+        count = int(asList[-1])
+       
+        #Add counts to the dictionary. if the position is already a key, 
+        #it appends to the keys list
+        if count != 0:
+            if posKey in dic:
+                dic[posKey].append(count)
+            else:
+                dic[posKey] = [count]
+
+
+def parseBed(bedFiles,bamFiles, outfile):
+    out = open(outfile,"w")
+    for bed in bedFiles:
+        name = path.basename(bed).replace(".bed","")
+        dic = {}
+        bamReads = []
+        for bam in bamFiles:
+            getCoverage(bed,bam, dic)
+            bamReads.append(getBamReads(bam))
+        
+        avgTotalReads = sum(bamReads) / len(bamReads)
+
+        #avarage coverage per gen
+        for i in dic.keys():
+            spl = i.split("-")
+            geneLength = int(spl[2]) - int(spl[1])
+            counts = dic[i]      
+            avgCount = sum(counts) / len(counts)
+            rpkm = (10e9*avgCount) / (avgTotalReads*geneLength)
+            out.write('"{}"\t{}\n'.format(name,str(rpkm)))
+
+    out.flush()
+    out.close()
+    
+if __name__ == "__main__":
+    args = argParsing()
+    parseBed(args.bedFiles, args.bamFiles, args.outfile)
+
