@@ -8,14 +8,15 @@ rule fastqdump:
 	input:
 		lambda wildcards: config["samples"][wildcards.sample]
 	output:
-		temp("fastq/{sample}_1.fastq"),
-		temp("fastq/{sample}_2.fastq")
+		"fastq/{sample}_1.fastq",
+		"fastq/{sample}_2.fastq"
 	params:
 		o="fastq/"
 	log:
 		"logs/fastqdump/{sample}.log"
+	threads: 1
 	shell:
-		"(fastq-dump {input} -O {params.o} --split-files) 2> {log}"
+		"(fastq-dump {input} -O {params.o}  --split-files) 2> {log}"
 		
 rule hisat:
 	input:
