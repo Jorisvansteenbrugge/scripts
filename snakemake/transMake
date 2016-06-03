@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+#Requires cwd because transrate is not really smart (i.e. dumb) in the way it handles file paths
+from os import getcwd
+fastas = config["fastas"]
+lefts = config["leftReads"]
+rights = config["rightReads"]
+cwd = getcwd()
+
+rule all:
+    input:
+        expand(cwd+"/uniqFa/{sample}.fa", sample=fastas)
+
+rule getUniq:
+    input: 
+        lambda wildcards: fastas[wildcards.sample]
+    output:
+        cwd+"/uniqFa/{sample}.fa"
+    threads: 1
+    shell:
+        "removeDoubleEntries {input} {output}"
+
+rule transrate:
+    input:
+        assembly=expand(cwd+"/uniqFa/{sample}.fa", sample=fastas),
+        left=expand("{sample}", sample=lefts),
+        right = expand("{sample}", sample=rights)
+    output:
+        config["transrateOut"]
+    threads: 12
+    run:
+        import subprocess as sp 
+        def getSplitted(inValue):
+            outString = ""
+            for x,y in inValue.allitems():
+                outString += y+","
+            return outString[:-1]
+       
+        assemblies = getSplitted(input.assembly)
+        leftReads = getSplitted(input.left)
+        rightReads = getSplitted(input.right)
+
+        CMD = "transrate --assembly={} --left={} --right={} --threads={} --output={}"
+        CMD = CMD.format(assemblies, leftReads, rightReads, threads, output[0])
+        sp.call(CMD, shell=True)
+        
+
+            
