@@ -41,6 +41,11 @@ def getCoverage(bed,bam, dic):
 
 def parseBed(bedFiles,bamFiles, outfile):
     out = open(outfile,"w")
+
+    #header line for the output file
+    out.write('"Name"\t"RPKM.log2"\n')
+    out.flush()
+
     for bed in bedFiles:
         name = path.basename(bed).replace(".bed","")
         dic = {}
