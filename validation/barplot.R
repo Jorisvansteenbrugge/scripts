@@ -22,6 +22,7 @@ as.data.frame(df) -> df
 
 ggplot(data=df, aes(annotation, percentage, fill=annotation)) +
   geom_bar(stat="identity")+
+  theme_classic() +
   ggtitle("percentage of peaks matching with at least 1 gene start")+
   scale_y_continuous(limits = c(0,100), expand = c(0,0),breaks = scaling)+
   guides(fill=FALSE)+
