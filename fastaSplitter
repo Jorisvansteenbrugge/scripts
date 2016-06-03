@@ -3,7 +3,10 @@
 #since: April 19
 #Function: Takes the fasta entries from a single file and outputs them to individual files
 import sys
+import argparse
 
+p = argparse.ArgumentParser()
+p.add_argument()
 try:
 	file = open(sys.argv[1])
 except:
