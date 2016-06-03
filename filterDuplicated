@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+from sys import argv
+
+
+outfile= open(argv[2],"a")
+
+with open(argv[1]) as infile:
+    for bedLine in infile:
+        bedLine = bedLine.strip().split("\t")
+
+        start = int(bedLine[1])
+        blSizes = bedLine[10].split(",")
+        blStarts = bedLine[11].split(",")
+        for x,y in enumerate(blSizes):
+            try:
+                size = int(y)
+                chrom = bedLine[0]
+                st = start+int(blStarts[x])
+                end = st+size
+                outfile.write("{0}\t{1}\t{2}\t{3}\n".format(chrom, st, end, y))
+            except:
+                pass
+outfile.flush()
+
