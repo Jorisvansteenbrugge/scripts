@@ -2,12 +2,13 @@
 #Assumes the following scripts are added to the user's path: peakGene, barplot.R
 #configfile required with the following entries in yaml format:
 # bedfiles, peakfile
-
 beds = config["bedfiles"]
 bams = config["bamfiles"]
 rule all:
     input:
-        "H3K4vsBed.tsv"
+        "H3K4vsBed.pdf",
+        "RPKMvsBed.pdf"
+
 rule peak_Gene:
     input: 
         beds=expand("{sample}.bed", sample=beds),
@@ -18,20 +19,30 @@ rule peak_Gene:
     shell:
         "peakGene -p {input.peakdir} -b {input.beds} -o {output}"
 
-rule boxplot:
-    input:
-        "H3K4vsBed.tsv"
-    output:
-        "H3K4vsBed.pdf"
-    threads:1
-    shell:
-        "barplot.R {input} {output}"
-
 rule rpkm:
     input:
         bed=expand("{sample}.bed", sample=beds),
         bam=expand("{sample}.bam", sample=bams)
     output:
-        "test.txt"
+        "RPKMvsBed.tsv"
+    threads: 1
     shell:
         "rpkmCalc -bam {input.bam} -bed {input.bed} -o {output}"
+
+rule barplot:
+    input:
+        "H3K4vsBed.tsv"
+    output:
+        "H3K4vsBed.pdf"
+    threads: 1
+    shell:
+        "barplot.R {input} {output}"
+
+rule boxplot:
+    input:
+        "RPKMvsBed.tsv"
+    output:
+        "RPKMvsBed.pdf"
+    threads: 1
+    shell:
+        "boxplot.R {input} {output}"
