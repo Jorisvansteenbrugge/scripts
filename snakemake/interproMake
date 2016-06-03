@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+beds = config["beds"]
+fasta = config["fasta"]
+
+rule all:
+    input:
+        expand("fasta/{sample}.fa", sample=beds)
+
+rule extractExons:
+    input:
+        lambda wildcards: beds[wildcards.sample]
+    output:
+        "exons/{sample}"
+    threads: 1
+    shell:
+        "filterDuplicated {input} {output}"
+rule sort:
+    input:
+        "exons/{sample}"
+    output:
+        temp("{sample}.sorted")
+    threads: 1
+    shell:
+        "bedtools sort -i {input} > {output}"
+
+rule merge:
+    input:
+        "{sample}.sorted"
+    output:
+        "merged/{sample}"
+    threads: 1
+    shell:
+        "bedtools merge -i {input} > {output}"
+
+rule getFasta:
+    input:
+        bed="merged/{sample}",
+        fa=fasta
+    output:
+        "fasta/{sample}.fa"
+    threads: 1
+    shell:
+        "bedtools getfasta -fi {input.fa} -bed {input.bed} -fo {output}"
+rule 
+
+        
