@@ -47,9 +47,7 @@ def parseFasta(fastaF,outF, bed):
         count+=1
         query.close()
 
-"""
-Uses REST to convert refseq id's to geneSymbols
-"""
+"""Uses REST to convert refseq id's to geneSymbols"""
 def getGeneSymbol(refID):
     url = 'http://biodbnet-abcc.ncifcrf.gov/webServices/rest.php/biodbnetRestApi.xml?'
     url +='method=db2db&format=row&input=genesymbol&inputValues={0}&outputs=geneSymbol'.format(refID)
@@ -66,9 +64,7 @@ def annotateSeq(queryFile):
     return resultFile.name
 
 """
-Checks if the protein coordinates are present somewhere in the bed file. 
-If not, the program skips the slow blast process.
-"""
+Checks if the protein coordinates are present somewhere in the bed file. If not, the program skips the slow blast process."""
 def checkIntersect(pos, bed):
     bedPos = pos.replace(":","\t")
     bedPos = bedPos.replace("-","\t")
