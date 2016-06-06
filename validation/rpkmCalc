@@ -5,7 +5,6 @@ from os import path
 import subprocess as sp
 import argparse
 
-bamstats = {}
 
 def argParsing():
     p = argparse.ArgumentParser()
@@ -14,14 +13,22 @@ def argParsing():
     p.add_argument("-o", dest="outfile", help="Output data file", required = True)
     return p.parse_args()
 
-
+"""
+Calculates the number of reads in a bam file using samtools flagstat.
+Returns the number of reads.
+"""
 def getBamReads(bam):
     CMD = "samtools flagstat {}".format(bam)
     out = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
-
-    #niet het allermooist misschien maar het werkt
+    
+    #Maybe not the pretiest way to do this but it works
     return int(out.stdout.readline().strip().decode('ascii').split(" + ")[0])
     
+"""
+Calculates the amount of reads present on bed regions using bedtools coverage.
+Uses a dictionary because the coverage of 1 bed file is calculated using possibly multiple bam files, and we need to make sure 
+the coverage counts of 1 bed region are matched together.
+"""
 def getCoverage(bed,bam, dic):
     CMD = "bedtools coverage -abam {} -b {} -counts -d".format(bam, bed)
     out = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
@@ -52,10 +59,12 @@ def parseBed(bedFiles,bamFiles, outfile):
         bamReads = []
         for bam in bamFiles:
             getCoverage(bed,bam, dic)
+            
+            #This should be done only for each bam file and not for every bam file for every bed file.
             bamReads.append(getBamReads(bam))
         
         avgTotalReads = sum(bamReads) / len(bamReads)
-
+        
         #avarage coverage per gen
         for i in dic.keys():
             spl = i.split("-")
@@ -64,7 +73,6 @@ def parseBed(bedFiles,bamFiles, outfile):
             avgCount = sum(counts) / len(counts)
             rpkm = (10e9*avgCount) / (avgTotalReads*geneLength)
             out.write('"{}"\t{}\n'.format(name,str(rpkm)))
-
     out.flush()
     out.close()
     
