@@ -19,6 +19,7 @@ y <- "% of peaks with gene start"
 as.data.table(df) -> df
 df[,percentage:=count/total*100]
 as.data.frame(df) -> df
+df <- df[with(df,order(df$count)), ]
 
 ggplot(data=df, aes(annotation, percentage, fill=annotation)) +
   geom_bar(stat="identity")+
