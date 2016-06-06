@@ -1,4 +1,3 @@
-from pybedtools import BedTool
 from sys import argv
 
 blastResult = argv[1]
