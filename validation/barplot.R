@@ -29,7 +29,7 @@ ggplot(data=df, aes(annotation, percentage, fill=annotation)) +
   guides(fill=FALSE)+
   labs(x=x, y=y) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
-#  facet_wrap(~st)
+
 
 ggsave(args[2])
 
