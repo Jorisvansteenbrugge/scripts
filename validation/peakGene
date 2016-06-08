@@ -47,7 +47,7 @@ def parseBedFiles(bedFiles, peakdir, outfile):
          
 
             #Calculate the total amount of genes in the bed file
-            peakCount = getTotalPeakCount(bed)
+            peakCount = getTotalPeakCount(peak)
 
             #Calculate the overlap count between peaks and bed genes
             CMD = "bedtools intersect -u  -a {} -b {} | wc -l".format(peak, parsedBedName)
