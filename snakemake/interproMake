@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+import glob
 beds = config["beds"]
 fasta = config["fasta"]
+nums = [1,2,3,4,5,6,7,8,9,10]
 
 rule all:
     input:
-        expand("fasta/{sample}.fa", sample=beds)
+        #expand("interpro/pita_{num}.fa",num=nums)
+        "test_pita.txt"
 
 rule extractExons:
     input:
@@ -40,7 +43,72 @@ rule getFasta:
         "fasta/{sample}.fa"
     threads: 1
     shell:
-        "bedtools getfasta -fi {input.fa} -bed {input.bed} -fo {output}"
-rule 
-
+        "bedtools getfasta -s -fi {input.fa} -bed {input.bed} -fo {output}"
+rule splitFasta:
+    input:
+        "fasta/{sample}.fa"
+    output:
+        "splitted/{sample}_1.fa",
+        "splitted/{sample}_2.fa",
+        "splitted/{sample}_3.fa",
+        "splitted/{sample}_4.fa",
+        "splitted/{sample}_5.fa",
+        "splitted/{sample}_6.fa",
+        "splitted/{sample}_7.fa",
+        "splitted/{sample}_8.fa",
+        "splitted/{sample}_9.fa",
+        "splitted/{sample}_10.fa"
+    threads:  1
+    run:
+        from Bio import SeqIO
         
+        seqList = []
+        length = 0
+        fasta_seqs = SeqIO.parse(open(input[0]),"fasta")
+        for fasta in fasta_seqs:
+            name, seq = fasta.id, str(fasta.seq)
+            seqList.append([name, seq])
+            length += 1
+        devision = int((length/10)+0.5)
+        out = 0
+        for i in range(10):
+                outFile = open(output[out],"w")
+                for y in range(0,devision):
+                    try:
+                        nameSeq = seqList.pop(0)
+                        outFile.write(">{}\n{}\n".format(nameSeq[0], nameSeq[1]))
+                    except IndexError:
+                        break
+                outFile.close()
+                out+=1
+
+rule interproscan:
+    input:
+        "splitted/{sample}_1.fa"
+    output:
+        "interpro/{sample}_1.fa",
+        "interpro/{sample}_2.fa",
+        "interpro/{sample}_3.fa",
+        "interpro/{sample}_4.fa",
+        "interpro/{sample}_5.fa",
+        "interpro/{sample}_6.fa",
+        "interpro/{sample}_7.fa",
+        "interpro/{sample}_8.fa",
+        "interpro/{sample}_9.fa",
+        "interpro/{sample}_10.fa"
+    threads: len(nums)
+    run:
+        from subprocess import Popen
+
+        sample = input[0].split("/")[1].split("_")[0]
+        files = glob.glob("splitted/{}_*.fa".format(sample))
+
+        def getOut(inFile):
+            return inFile.replace("splitted","interpro")
+        cmd = "interproscan.sh -i {} -f tsv -o {}"
+        processes = [Popen(cmd.format(i,getOut(i)), shell=True) for i in files]
+
+        for p in processes: 
+            p.wait()
+        
+

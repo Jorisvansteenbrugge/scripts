@@ -33,10 +33,7 @@ def parseBedFiles(bedFiles, peakdir, outfile):
 
         #extract the first exon of each gene in the bed file
         parsedBedName = getFirstExonBed(bed)
-        
-
-        
-
+              
         peakFiles = []
         if peakdir.endswith(".bed"):
             peakFiles.append(peakdir)
@@ -45,16 +42,13 @@ def parseBedFiles(bedFiles, peakdir, outfile):
         for peak in peakFiles:
             stage = path.basename(peak).replace("H3K4me3_","").replace(".bed","")
          
-
             #Calculate the total amount of genes in the bed file
-            peakCount = getTotalPeakCount(bed)
+            peakCount = getTotalPeakCount(peak)
 
             #Calculate the overlap count between peaks and bed genes
             CMD = "bedtools intersect -u  -a {} -b {} | wc -l".format(peak, parsedBedName)
             p = sp.Popen(CMD, shell=True, stdout = sp.PIPE)
             count = p.stdout.readline().strip()
-           
-    
 
             #writes output formatted to the outfile
             line = [entryName, stage, count.decode('ascii') , peakCount.decode('ascii') ]
