@@ -26,7 +26,7 @@ rule transrate:
         right = expand("{sample}", sample=rights)
     output:
         config["transrateOut"]
-    threads: 12
+    threads: 18
     run:
         import subprocess as sp 
         def getSplitted(inValue):
@@ -38,9 +38,10 @@ rule transrate:
         assemblies = getSplitted(input.assembly)
         leftReads = getSplitted(input.left)
         rightReads = getSplitted(input.right)
-
+    
+        print(output[0])
         CMD = "transrate --assembly={} --left={} --right={} --threads={} --output={}"
-        CMD = CMD.format(assemblies, leftReads, rightReads, threads, output[0])
+        CMD = CMD.format(assemblies, leftReads, rightReads, threads,  output[0])
         sp.call(CMD, shell=True)
         
 
