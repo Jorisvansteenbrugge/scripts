@@ -68,23 +68,21 @@ Intersection later on now guarantees that the peak will be matched with the gene
 def getFirstExonBed(bedFile):
     temp = ntp(delete=False,mode="w")
     with open(bedFile) as inFile:
-        for line in inFile:
-            line = line.strip().split("\t")
-            strand = line[5]
-            start = int(line[1])
-            end = int(line[2])
-            blocks = int(line[9])
-            blsizes = line[10].split(",")
-            blstarts = line[11].split(",")
-            if "+" in strand:
-                newStart = start+int(blstarts[0])
-                newEnd = newStart+int(blsizes[0])
-            elif "-" in strand:
-                newStart = start+int(blstarts[blocks-1])
-                newEnd = newStart+int(blsizes[blocks-1])
-            out = [line[0],str(newStart),str(newEnd)]
-            temp.write("\t".join(out)+"\n") #strings are not mutable so join is quicker
+        for i in inFile:
+            try:
+                line = i.strip().split("\t")
+                if line[5] == "+":
+                    start = int(line[1])
+                else:
+                    Start = int(line[2])
 
+                newEnd = start+1000
+                newStart = start-1000
+                out = [line[0], str(newStart), str(newEnd)]
+                temp.write("\t".join(line)+"\n")
+            except:
+                print("line: {}".format(i))
+                print("bedfile: {}".format(bedFile))
     temp.flush()
     return temp.name
 
