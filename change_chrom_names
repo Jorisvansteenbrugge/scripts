@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+from Bio import SeqIO
+from sys import argv
+
+
+c = 1
+
+with open(argv[2], 'w') as outfile:
+    for record in SeqIO.parse(argv[1], 'fasta'):
+        rec_id  = 'contig' + str(c)
+        c+= 1
+
+        outfile.write(">{}\n{}\n".format(rec_id, record.seq))
