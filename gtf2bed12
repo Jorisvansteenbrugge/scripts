@@ -10,99 +10,99 @@ inputFile =  sys.argv[1]
 
 #Abstart class Entry (either an Exon or a Transcript)
 class Entry(object):
-	__metaclass__ = ABCMeta
-        start = None
-        Chr = None
-        stop = None
-        score = None
-        strand = None
-        frame = None    
-        attribute = None 	
+    __metaclass__ = ABCMeta
+    start = None
+    Chr = None
+    stop = None
+    score = None
+    strand = None
+    frame = None    
+    attribute = None 	
 
 #Inherited from Entry class.
 class Exon(Entry):
 
-	def __init__(self,start,stop,score):
-		self.start = int(start) -1 
-		self.stop = int(stop) 
-		self.score = score
+    def __init__(self,start,stop,score):
+        self.start = int(start) -1 
+        self.stop = int(stop) 
+        self.score = score
 
-	def getLength(self):
-		return str(self.stop - self.start)
+    def getLength(self):
+	    return str(self.stop - self.start)
 
-	def getStart(self):
-		return self.start
+    def getStart(self):
+        return self.start
 #Inherited from Transcript
 class Transcript(Entry):
-	exons = None
-	bedline = None
-	def __init__(self,Chr, start,stop,score,strand,attribute):
-		self.Chr = Chr
-		self.start = int(start) - 1
-		self.stop = int(stop) 
-		self.score = score
-		self.strand = strand
-		self.attribute = attribute
-		self.exons = []
-		self.bedline = []
+    exons = None
+    bedline = None
+    def __init__(self,Chr, start,stop,score,strand,attribute):
+        self.Chr = Chr
+        self.start = int(start) - 1
+        self.stop = int(stop) 
+        self.score = score
+        self.strand = strand
+        self.attribute = attribute
+        self.exons = []
+        self.bedline = []
 
-	def addExon(self,start,stop,score):
-		self.exons.append(Exon(start,stop,score))
+    def addExon(self,start,stop,score):
+        self.exons.append(Exon(start,stop,score))
 
-	def getGeneName(self):
-		atts = self.attribute.split(";")
-		gene = atts[0].replace("gene_id","")
-		return gene.replace("\"","")
+    def getGeneName(self):
+        atts = self.attribute.split(";")
+        gene = atts[0].replace("gene_id","")
+        return gene.replace("\"","")
 		
-	def getExonLength(self):
-		out = []
-		for i in self.exons:
-			out.append(i.getLength())
-		return ",".join(out)	
+    def getExonLength(self):
+        out = []
+        for i in self.exons:
+            out.append(i.getLength())
+        return ",".join(out)	
 
-	def getStarts(self):
-		out = []
-		for i in self.exons:
-			out.append(str(i.getStart()-self.start))
-		return ",".join(out)
-	"""
-	Converts the transcript alongside with all exons to bed 12 format 
-	"""
-	def toBed12(self):
-		self.bedline.append(self.Chr)
-		self.bedline.append(str(self.start))
-		self.bedline.append(str(self.stop))
-		self.bedline.append(self.getGeneName())
-		self.bedline.append(self.score)
-		self.bedline.append(self.strand)
-		self.bedline.append(str(self.start))
-		self.bedline.append(str(self.stop))
-		self.bedline.append("0,0,0")
-		self.bedline.append(str(len(self.exons)))	
-		self.bedline.append(self.getExonLength())
-		self.bedline.append(self.getStarts())
-		return "\t".join(self.bedline)
+    def getStarts(self):
+        out = []
+        for i in self.exons:
+            out.append(str(i.getStart()-self.start))
+        return ",".join(out)
+    """
+    Converts the transcript alongside with all exons to bed 12 format 
+    """
+    def toBed12(self):
+        self.bedline.append(self.Chr)
+        self.bedline.append(str(self.start))
+        self.bedline.append(str(self.stop))
+        self.bedline.append(self.getGeneName())
+        self.bedline.append(self.score)
+        self.bedline.append(self.strand)
+        self.bedline.append(str(self.start))
+        self.bedline.append(str(self.stop))
+        self.bedline.append("0,0,0")
+        self.bedline.append(str(len(self.exons)))	
+        self.bedline.append(self.getExonLength())
+        self.bedline.append(self.getStarts())
+        return "\t".join(self.bedline)
 		
 
 
 def parseGTF():
-	with open(inputFile) as file:
-		trscript = None	
-		for line in file:
-			line = line.split("\t")
-			if "transcript" in line:
-				if not trscript:
-					trscript = Transcript(line[0], line[3], line[4], line[5],line[6],line[8])
-				else:
-					print trscript.toBed12()
-					trscript = None
-					trscript = Transcript(line[0],line[3], line[4],line[5],line[6],line[8])
-			elif "exon" in line:
-				trscript.addExon(line[3],line[4],line[5])		
-		print trscript.toBed12()
-	return 0
+    with open(inputFile) as file:
+        trscript = None	
+        for line in file:
+            line = line.split("\t")
+            if "transcript" in line:
+                if not trscript:
+                    trscript = Transcript(line[0], line[3], line[4], line[5],line[6],line[8])
+                else:
+                    print(trscript.toBed12())
+                    trscript = None
+                    trscript = Transcript(line[0],line[3], line[4],line[5],line[6],line[8])
+            elif "exon" in line:
+                trscript.addExon(line[3],line[4],line[5])		
+        print(trscript.toBed12())
+    return 0
 
 
 if __name__ == "__main__":
-	parseGTF()
+    parseGTF()
 
