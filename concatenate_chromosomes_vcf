@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+from sys import argv, exit
+from Bio import SeqIO
+
+if len(argv) != 3:
+    exit("usage: <script> file.vcf  genome.fa")
+
+vcf_file = argv[1]
+genome = argv[2]
+
+dic = {}
+
+for record in SeqIO.parse(genome,'fasta'):
+    dic[record.id] = str(record.seq)
+
+
+genome_order = sorted(dic.keys())
+print(genome_order)

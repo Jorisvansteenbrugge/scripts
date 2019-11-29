@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+import argparse
+from Bio import SeqIO
+
+
+def get_arguments():
+    p = argparse.ArgumentParser()
+    p.add_argument("--vcf", help = "Variants in vcf format (uncompressed)", dest = 'vcf', required = True)
+    p.add_argument("-b", help = 'binning size for SNP frequency (default: 100000)', dest = 'bin_size', default= 100000, type = int,
+            required = False)
+
+    p.add_arumgnet("--genome", help = "Genome fasta", dest ='genome', required = True)
+
+    return p.parse_args()
+
+
+
+def get_bins(genome_size, bin_size):
+    return range(0, genome_size, bin_size)
+
+
+def parse_vcf(VCF_file):
+    positions = []
+    with open(VCF_file) as VCF:
+        for line in VCF:
+
+            if line.startswith("#"):
+                continue
+            
+            line = line.split("\t")
+            positions.append(line[1])
+            
+if __name__ == '__main__':
+    options = get_arguments()
+    
+    bin_ranges = get_bins(options.genome_size, options.bin_size)
+
+
