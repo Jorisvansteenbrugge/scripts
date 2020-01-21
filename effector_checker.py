@@ -147,7 +147,7 @@ if __name__ == '__main__':
 	prot_map = get_fasta_map(PROTEOME)
 	gff_map = get_gff_map(GFF)
 
-
+	print("Transcript\tSignalPeptide\tTransmembrane\tDogBox")
 
 	for transcript in TIDs:
 		prot = prot_map[transcript]

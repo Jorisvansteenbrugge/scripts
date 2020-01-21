@@ -35,4 +35,15 @@ if mode == 'fasta':
     out_fasta.close()
     out_map.close()
 elif mode == 'tree':
-    pass # todo
+    id_map = {}
+    with open('id_maptable.txt','r') as map_file:
+        for line in map_file:
+            line = line.strip().split('\t')
+            id_map[line[0]] = line[1] 
+
+    with open(filename) as in_tree:
+        tree_line = ''.join(in_tree.readlines())
+        for id in id_map.keys():
+            tree_line = tree_line.replace(id, id_map[id])
+
+        print(tree_line)                

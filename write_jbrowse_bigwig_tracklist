@@ -1,0 +1,14 @@
+#!/bin/bash
+# ERR1173511_Female_14dpi.bw
+
+echo '  {'
+echo '      "storeClass": "JBrowse/Store/SeqFeature/BigWig",'
+echo '      "autoscale": "local",'
+echo '      "type": "JBrowse/View/Track/Wiggle/XYPlot",'
+echo '      "bicolor_pivot": "zero",'
+echo '      "category": "RNAseq Expression Graph",'
+echo "      \"urlTemplate\": \"bw/$1\","
+echo "      \"key\":\"$(basename $1 .bw)\","
+echo "      \"label\":\"$(basename $1 .bw)\""
+echo '  },'
+
