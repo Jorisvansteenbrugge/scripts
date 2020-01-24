@@ -30,6 +30,8 @@ def get_args():
 
     p.add_argument('-i', help='input alignment.backbone file (from Mauve output)', 
                    required = True, dest = 'backbone')
+    p.add_argument("--threshold", help ='block length threshold (removes small alignments)',
+                   required = False, dest = 'threshold', type = int)
     p.add_argument('--isolate', help = 'You can define a genome to isolate',
                    required = False, dest = 'isolate')
     p.add_argument("--isolate-output", help = 'output file for the features without the isolated genome',
@@ -42,24 +44,35 @@ def has_seq(coord):
     return coord[0] != coord[1] and not coord[0].startswith('-')
 
 def get_coords(line, x):
-    return (line[x], line[x+1])
+    return line[x], line[x + 1]
 
 def is_isolate_in_genomes(genomes, isolate):
     genome_names = [x.name for x in genomes]
     return isolate in genome_names 
 
+def is_coord_long_enough(coord, len_threshold):
+    length = abs(abs(int(coord[0])) - abs(int(coord[1])))
+
+    if length >= len_threshold:
+        return True
+    else:
+        return False
 
 
 
-def output(combis, out_source = stdout):
+def output(combis, len_threshold, out_source = stdout):
     
     for combination in combis: 
         A, B = combination
 
-        out = f"{A.name} {A.start} {A.stop} {B.name} {B.start} {B.stop}"
-        print(out, file = out_source)
+        if not is_coord_long_enough((A.start, A.stop), len_threshold):
+            continue
+        else:
 
-def parse_backbone(backbone, isolate = None):
+            out = f"{A.name} {A.start} {A.stop} {B.name} {B.start} {B.stop}"
+            print(out, file = out_source)
+
+def parse_backbone(backbone, len_threshold, isolate = None ):
     with open(backbone) as bb:
         header = bb.readline().strip().split('\t')
 
@@ -71,6 +84,7 @@ def parse_backbone(backbone, isolate = None):
             line = line.strip().split('\t')
 
             coords = [ get_coords(line, x) for x in range(0, n_col, 2) ]
+
             presence = [has_seq(coord) for coord in coords]
 
             genomes = []
@@ -83,17 +97,17 @@ def parse_backbone(backbone, isolate = None):
                 continue
 
             combis = combinations(genomes,2)
-            iso_status = args.isolate != None       
+            iso_status = isolate != None
 
 
             if iso_status:
                 if is_isolate_in_genomes(genomes, args.isolate):
                     # normal print
-                    output(combis)
+                    output(combis, len_threshold)
                 else:
-                    output(combis, iso_file)
+                    output(combis, len_threshold, iso_file)
             else:
-                output(combis)
+                output(combis, len_threshold)
 
 def open_iso_file(args):
     global iso_file
@@ -111,7 +125,7 @@ if __name__ == "__main__":
 
     if args.isolate:
         open_iso_file(args)
-        parse_backbone(args.backbone, args.isolate)
+        parse_backbone(args.backbone, args.threshold, args.isolate)
     else:
-        parse_backbone(args.backbone)
+        parse_backbone(args.backbone, args.threshold)
 
