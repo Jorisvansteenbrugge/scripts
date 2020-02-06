@@ -31,7 +31,7 @@ def get_args():
     p.add_argument('-i', help='input alignment.backbone file (from Mauve output)', 
                    required = True, dest = 'backbone')
     p.add_argument("--threshold", help ='block length threshold (removes small alignments)',
-                   required = False, dest = 'threshold', type = int)
+                   required = False, dest = 'threshold', type = int, default = 3000)
     p.add_argument('--isolate', help = 'You can define a genome to isolate',
                    required = False, dest = 'isolate')
     p.add_argument("--isolate-output", help = 'output file for the features without the isolated genome',
@@ -41,10 +41,10 @@ def get_args():
 
 
 def has_seq(coord):
-    return coord[0] != coord[1] and not coord[0].startswith('-')
+    return coord[0] != coord[1] #and not coord[0].startswith('-')
 
 def get_coords(line, x):
-    return line[x], line[x + 1]
+    return abs(int(line[x])), abs(int(line[x + 1]))
 
 def is_isolate_in_genomes(genomes, isolate):
     genome_names = [x.name for x in genomes]
@@ -105,6 +105,7 @@ def parse_backbone(backbone, len_threshold, isolate = None ):
                     # normal print
                     output(combis, len_threshold)
                 else:
+
                     output(combis, len_threshold, iso_file)
             else:
                 output(combis, len_threshold)

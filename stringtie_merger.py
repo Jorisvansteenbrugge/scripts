@@ -65,8 +65,12 @@ def get_transcript_ids(gff_file):
                 continue
 
             info = line[8].split(";")
-            value = [x for x in info if 'ID' in x]  # Here we extract the right collumn (e.g. cov, FPKM or TPM)
-            value = value[0].split('=')[1]
+            try:
+                value = [x for x in info if 'ID' in x]  # Here we extract the right collumn (e.g. cov, FPKM or TPM)
+                value = value[0].split('=')[1]
+            except IndexError:
+                value = [x for x in info if 'transcript_id' in x]
+                value = value[0].split(' ')[1].replace('"',"")
             id_list.append(value)
 
     return list(set(id_list))
@@ -116,13 +120,13 @@ def report_counts():
     :type samples: Sample
     """
 
-    stringtiedir = "/home/joris/nemaNAS/steen176/Annotation/G_ros22/stringtie_counts/"
+    stringtiedir = "/home/joris/nemaNAS/steen176/SECPEP/stringtie_counts/"
     OUTDIR = "/tmp/test/"
-    species = "Grost22"
-    model_gff = "/home/joris/nemaNAS/steen176/Annotation/G_ros22/braker_results2/res/augustus.hints.gff3"
+    species = "Grost19"
+    model_gff = "/home/joris/Desktop/Gr19_SECPEPs-2.gff3"
 
-    countstat = "TPM"
-    statistic = 'TPM'
+    countstat = "FPKM"
+    statistic = 'FPKM'
     try:
         mkdir(OUTDIR)
     except FileExistsError:
