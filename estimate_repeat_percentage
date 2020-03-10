@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+from sys import argv
+from Bio import SeqIO
+
+total = 0
+total_upper = 0
+total_lower = 0
+
+
+repeat_super_sequence = ''
+full_super_sequence = ''
+
+for scaffold in SeqIO.parse(argv[1], 'fasta'):
+    seq = str(scaffold.seq)
+    full_super_sequence += seq
+
+
+    res = [nuc for nuc in seq if nuc=='a']
+
+    total_upper += seq.count('A') + seq.count('T') + seq.count('C') + seq.count('G')
+    total_lower += seq.count('a') + seq.count('t') + seq.count('c') + seq.count('g')
+
+    total += len(seq)
+
+    ##########
+
+    repeat_seq = ''.join([nuc for nuc in seq if (nuc == 'a') or (nuc == 't') or (nuc == 'g') or (nuc == 'c')])
+    repeat_super_sequence += repeat_seq
+
+
+
+perc_repeat = (total_lower / total) * 100
+
+print(f'Repeat percentage: {perc_repeat}')
+
+
+###GC
+
+gc = repeat_super_sequence.count('g') + repeat_super_sequence.count('c')
+#perc_gc_repeat = gc / len(repeat_super_sequence) * 100
+
+
+full_gc = full_super_sequence.count('g')+full_super_sequence.count('c')+full_super_sequence.count('G')+ full_super_sequence.count('C')
+
+perc_gc_full = full_gc / len(full_super_sequence) *100
+
+#print(f'\nRepeat GC content: {perc_gc_repeat}')
+print(f"Overall GC content: {perc_gc_full}")
+

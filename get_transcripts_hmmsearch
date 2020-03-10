@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for arg 
+do cat $arg | grep -v '#'| awk '{print $1}' | tr '\n' ' '
+done

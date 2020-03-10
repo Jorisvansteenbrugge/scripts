@@ -1,14 +1,28 @@
+#!/usr/bin/env python
+
 import logging
 from typing import Dict, Any, List, Union, Tuple
 
 import pandas
 import re
+import argparse
 import subprocess as sp
 from os import path, mkdir
 from sys import exit
 from glob import glob
 
 
+
+def get_arguments():
+    p = argparse.ArgumentParser()
+    p.add_argument('--stringtie-dir', dest = 'stringtiedir', help = 'Directory containing stringtie gtfs',
+                    required = True)
+    p.add_argument('--outdir', dest = 'outdir', required = True)
+    p.add_argument('--suffix', dest = 'species', required = True)
+    p.add_argument('--model', dest = 'model_gff', required = True)
+
+
+    return p.parse_args()
 
 
 
@@ -65,12 +79,17 @@ def get_transcript_ids(gff_file):
                 continue
 
             info = line[8].split(";")
+            
             try:
                 value = [x for x in info if 'ID' in x]  # Here we extract the right collumn (e.g. cov, FPKM or TPM)
                 value = value[0].split('=')[1]
             except IndexError:
-                value = [x for x in info if 'transcript_id' in x]
-                value = value[0].split(' ')[1].replace('"',"")
+                try:
+                    value = [x for x in info if 'transcript_id' in x]
+                    value = value[0].split(' ')[1].replace('"',"")
+                except IndexError:
+                    value = info[0]
+
             id_list.append(value)
 
     return list(set(id_list))
@@ -113,20 +132,20 @@ def write_counts_table(count_df, output_file, col_header):
             outfile.write("{}\n".format(";".join(map(str, row))))
 
 
-def report_counts():
+def report_counts(args):
     """Parse the stringtie outputs and generate a table from it.
 
     :param options:
     :type samples: Sample
     """
 
-    stringtiedir = "/home/joris/nemaNAS/steen176/SECPEP/stringtie_counts/"
-    OUTDIR = "/tmp/test/"
-    species = "Grost19"
-    model_gff = "/home/joris/Desktop/Gr19_SECPEPs-2.gff3"
-
-    countstat = "FPKM"
-    statistic = 'FPKM'
+    stringtiedir = args.stringtiedir
+    OUTDIR = args.outdir
+    species = args.species
+    model_gff = args.model_gff
+ 
+    countstat = "TPM"
+    statistic = countstat
     try:
         mkdir(OUTDIR)
     except FileExistsError:
@@ -159,4 +178,6 @@ def report_counts():
                                                                      species=species_name,
                                                                      countstat=statistic)
     write_counts_table(statistic_df, output_file, col_header)
-report_counts()
+
+args = get_arguments()
+report_counts(args)

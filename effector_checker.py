@@ -5,13 +5,13 @@ from subprocess import Popen, PIPE
 from sys import argv
 
 # De bekende files..
-GENOME_22="/home/joris/nemaNAS/steen176/Annotation/G_ros22/G_rostochiensis_22_v0.8.fasta"
-PROTEOME_22="/home/joris/nemaNAS/steen176/Annotation/G_ros22/braker_results2/res/augustus.hints.aa"
-GFF_22="/home/joris/nemaNAS/steen176/Annotation/G_ros22/braker_results2/res/augustus.hints.gff3"
+GENOME_22   = "/home/joris/nemaNAS/steen176/Annotation/G_ros22/G_rostochiensis_22_v0.8.fasta"
+PROTEOME_22 = "/home/joris/nemaNAS/steen176/Annotation/G_ros22/braker_results2/res/augustus.hints.aa"
+GFF_22      = "/home/joris/nemaNAS/steen176/Annotation/G_ros22/braker_results2/res/augustus.hints.gff3"
 
-GENOME_19="/home/joris/nemaNAS/steen176/Annotation/G_ros19/G_rostochiensis_19_v0.8.fasta"
-PROTEOME_19="/home/joris/nemaNAS/steen176/Annotation/G_ros19/braker_results/augustus.hints.aa"
-GFF_19="/home/joris/nemaNAS/steen176/Annotation/G_ros19/braker_results/augustus.hints.gff3"
+GENOME_19   = "/home/joris/nemaNAS/steen176/Annotation/G_ros19/G_rostochiensis_19_v0.8.fasta"
+PROTEOME_19 = "/home/joris/nemaNAS/steen176/Annotation/G_ros19/braker_results/augustus.hints.aa"
+GFF_19      = "/home/joris/nemaNAS/steen176/Annotation/G_ros19/braker_results/augustus.hints.gff3"
 
 GENOME_ref   = "/home/joris/nemaNAS/steen176/reference_genome/globodera_rostochiensis.PRJEB13504.WBPS14.genomic_softmasked.fa"
 PROTEOME_ref = "/home/joris/nemaNAS/steen176/reference_genome/globodera_rostochiensis.PRJEB13504.WBPS14.protein.fa"

@@ -8,6 +8,8 @@ assembly_size = int(argv[3])
 total_pos = 0
 total_min = 0
 
+positions = []
+
 uncovered = 0 # number of basepairs where there was no match with other genomes
 
 with open(argv[1]) as backbone_file:
@@ -27,18 +29,10 @@ with open(argv[1]) as backbone_file:
 
 
 
-		#if reg_size < 3000:
-	#		continue
-
-		
-
 
 		if False in [line[col] == '0' for col in other_cols]:
-
-			if start < 0 and end < 0:
-				total_min += reg_size
-			else:
-				total_pos += reg_size
+			positions += list(range(abs(start), abs(end)))
+		
 
 		else:
 			uncovered += reg_size
@@ -46,15 +40,17 @@ with open(argv[1]) as backbone_file:
 		
 
 
-		
 
-total_covered    = sum([total_min,total_pos])
+
+	
+positions = list(set(positions))
+	
+
+
+total_covered    = len(positions)
 cov_percentage   = (total_covered/assembly_size) * 100
 
 uncov_percentage = (uncovered/assembly_size) * 100
-
-print(total_pos)
-print(total_min)
 
 print(f"Total all: {total_covered}, that is: {cov_percentage}% of the assembly size")
 print(f"Total uncovered {uncovered}, that is: {uncov_percentage}% of the assembly_size")

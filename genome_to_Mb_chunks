@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+from sys import argv
+from Bio import SeqIO
+
+try:
+    chunk_size = int(argv[2])
+except IndexError:
+    chunk_size = 1000000
+for scaffold in SeqIO.parse(argv[1], 'fasta'):
+    scaffold_name = scaffold.id
+    scaffold_sequence = str(scaffold.seq)
+
+    for i in range(0, len(scaffold_sequence), chunk_size):
+        print(f'{scaffold_name}\t{i}\t{(i+chunk_size)}')
+
