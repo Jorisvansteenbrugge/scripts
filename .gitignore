@@ -1,3 +1,7 @@
 *.pyc
 *.nfs*
 *~
+*.fasta
+*.fa
+*.2bit
+*.sizes
