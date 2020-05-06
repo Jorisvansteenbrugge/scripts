@@ -17,7 +17,17 @@ for record in SeqIO.parse(orf_prot_file, 'fasta'):
 	else:
 		region_fmt = f"{chrom}:{end}-{start}"	
 
-	p = Popen(f'samtools faidx {genome_file} {region_fmt}', shell = True)
+	p = Popen(f'samtools faidx {genome_file} {region_fmt}', shell = True, stdout = PIPE)
+	out, err = p.communicate()
 
+
+	seq = out.decode().split("\n")
+	header_wrong = seq.pop(0)
+	seq = "".join(seq)
+
+
+	header = " ".join(header)
+	print(f">{header}\n{seq}")
 	
 
+	
