@@ -1,6 +1,6 @@
 
 get_number <- function(num){
-    return(log2(num))
+    return((num))
 }
 read_chrom_sizes <- function(chroms.u, chrom.sizes, dataset, chr_dist_scale = 1){
     current.sizes.df <- data.frame(matrix(ncol =2, nrow =0), 
@@ -51,7 +51,7 @@ get_fam_box_df <- function(){
     return(test.df)
 }
 
-get_fam_point_df <- function(dataset, sizes.df, ypos_add = 0.05){
+get_fam_point_df <- function(dataset, sizes.df, ypos_add = 0){
     
     fam.df <- data.frame(matrix(nrow = 0, ncol = 3), stringsAsFactors = F)
     for(row.idx in 1:nrow(dataset)){
@@ -84,29 +84,32 @@ Plot_family_overview <- function(dataset, chrom.sizes, title = "Title"){
     fam.df <- get_fam_point_df(dataset, sizes.df)
     
     
-    amounts_right_shift <- 1
+    amounts_right_shift <- 100000
     
     ggplot(sizes.df) +
         geom_line(aes(x = Pos, y = Ypos, group = Chrom)) +
-        geom_text(aes(y = Ypos, x = c(-1*get_number(30)), 
-                      label = Chrom), size = 7)  +
+      
+        geom_text(aes(y = Ypos, x = c(-1*get_number(1200000)), 
+                      label = Chrom), size = 7, hjust=0)  +
+      
         geom_text(aes(y = Ypos, x = c(max(Pos)+amounts_right_shift),
                       label = Amounts), size = 4) +
-        scale_x_continuous(limits = c(-1*get_number(400), 
+        scale_x_continuous(limits = c(-1*get_number(1200000), 
                                       max(sizes.df$Pos)+amounts_right_shift),
-                           breaks = c(0,10,20)) +
+                           breaks = round(seq(min(sizes.df$Pos), max(sizes.df$Pos), by = 1000000))) +
         geom_point(data = fam.df, aes(x=posX, y = posY, fill = Family, 
                                       color = 'black'), 
-                   shape = 25, color = 'black', size = 5) + 
+                   shape = 25, color = 'black', size = 4) + 
         ggtitle(title) +
         theme_classic() +
-        xlab("Log2 Scaffold Position")+
+        xlab("Scaffold Position")+
         theme(plot.title = element_text(size = 30),
               axis.title.y = element_blank(),
               axis.text.y=element_blank(),
               axis.ticks.y=element_blank(),
               axis.text.x = element_text(size = 20),
-              axis.title.x = element_text(size = 20))
+              axis.title.x = element_text(size = 20)) 
+    
     
     
         

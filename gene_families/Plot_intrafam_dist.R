@@ -211,7 +211,11 @@ Plot_family_overview(data_1106_22, chrom.sizes.22, title = "G. rostochiensis L22
 Plot_family_overview(data_GLAND6_19, chrom.sizes.19, title = "G. rostochiensis L19 4D06")
 Plot_family_overview(data_GLAND6_22, chrom.sizes.22, title = "G. rostochiensis L22 4D06")
 
+par(mar =c(0,0,0,0))
 Plot_family_overview(data_sprysec_19, chrom.sizes.19, title = "G. rostochiensis L19 SPRYSEC")
-Plot_family_overview(data_sprysec_22, chrom.sizes.22, title = "G. rostochiensis L22 SPRYSEC")
 
+
+svg("~/Figures/Fam_distance_figures/Gr22_SPRYSEC_organisation.svg")
+Plot_family_overview(data_sprysec_22, chrom.sizes.22, title = "G. rostochiensis L22 SPRYSEC")
+dev.off()
 
