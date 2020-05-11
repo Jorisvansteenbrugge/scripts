@@ -47,7 +47,7 @@ Plot_figure <- function(data){
 
 Import_table <- function(loaded_data, file, fam_name, group_name, Pop){
 
-    data <- read.table(file)
+    data <- read.table(file, stringsAsFactors = F)
     colnames(data) <- c("chrom","start","end","transcript","score",'strand')
     
     data %<>% Add_family_col(fam.name = fam_name)
@@ -65,14 +65,71 @@ Import_table <- function(loaded_data, file, fam_name, group_name, Pop){
     }
 
 
-Get_Number_clustered <- function(data, cluster_threshold = 4){
-  clustered_chrom.names <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
+Get_Number_clustered <- function(data, cluster_threshold = 4, dist_treshold = 500000){
+  clustered.grand_total <- 0
   
-  clustered_gene.number <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
-  unclusered_gene.number <- nrow(data) - clustered_gene.number
+  for (chrom in unique(data$chrom)){
+    subset_chrom <- data[which(data$chrom == chrom),]
+    rownames(subset_chrom) <- subset_chrom$transcript
+    
+    distance <- subset_chrom$centers %>% dist %>% as.matrix
+    total.clustered <- sapply(1:ncol(distance), function(i){
+      col_vals <- distance[,i]
+      col_vals.clustered <- col_vals[which(col_vals <= dist_treshold)]
+      if(length(col_vals.clustered) > cluster_threshold){
+        return(1)
+      } else{
+        return(0)
+      }
+      
+    }) %>% sum
+    
+    clustered.grand_total <- clustered.grand_total + total.clustered
+    
+  }
+
+  #clustered_chrom.names  <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
+  #clustered_gene.number  <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
+  #unclusered_gene.number <- nrow(data) - clustered_gene.number
+
+  unclustered_gene.number <- nrow(data) - clustered.grand_total
   
-  return(c("clustered_gene.number" =clustered_gene.number, "unclusered_gene.number"=unclusered_gene.number))
+  return(c("clustered_gene.number" =clustered.grand_total, "unclustered_gene.number"=unclustered_gene.number))
+
 }
+
+# Get_Subset_Clustered <- function(data, cluster_threshold = 4, dist_treshold = 500000){
+#   clustered.grand_total <- 0
+#   
+#   for (chrom in unique(data$chrom)){
+#     subset_chrom <- data[which(data$chrom == chrom),]
+#     rownames(subset_chrom) <- subset_chrom$transcript
+#     
+#     distance <- subset_chrom$centers %>% dist %>% as.matrix
+#     total.clustered <- sapply(1:ncol(distance), function(i){
+#       col_vals <- distance[,i]
+#       col_vals.clustered <- col_vals[which(col_vals <= dist_treshold)]
+#       if(length(col_vals.clustered) > cluster_threshold){
+#         return(1)
+#       } else{
+#         return(0)
+#       }
+#       
+#     }) %>% sum
+#     
+#     clustered.grand_total <- clustered.grand_total + total.clustered
+#     
+#   }
+#   
+#   #clustered_chrom.names  <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
+#   #clustered_gene.number  <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
+#   #unclusered_gene.number <- nrow(data) - clustered_gene.number
+#   
+#   unclustered_gene.number <- nrow(data) - clustered.grand_total
+#   
+#   return(c("clustered_gene.number" =clustered.grand_total, "unclustered_gene.number"=unclustered_gene.number))
+#   
+# }
 
 #####################################
 data_GH5_19 <- NULL
@@ -128,26 +185,24 @@ data_GLAND6_19 <- Import_table(data_GLAND6_19, "~/nemaNAS/steen176/genome_compar
 
 
 data_all22 <- sapply(list(
-  "GH5"= data_GH5_22, "GH30" = data_GH30_22, "CLE" = data_CLE_22, "SPRYSEC" = data_sprysec_22,
-  "1106"=data_1106_22,"GLAND6"=data_GLAND6_22),
+  "GH5"= data_GH5_22, "GH30" = data_GH30_22, "CLE" = data_CLE_22, "SPRYSEC" = data_sprysec_22,"1106"=data_1106_22,"GLAND6"=data_GLAND6_22),
                      Get_Number_clustered) %>% melt
 
 data_all19 <- sapply(list(
-  "GH5"= data_GH5_19, "GH30" = data_GH30_19, "CLE" = data_CLE_19, "SPRYSEC" = data_sprysec_19,
-  "1106"=data_1106_19,"GLAND6"=data_GLAND6_19),
+  "GH5"= data_GH5_19, "GH30" = data_GH30_19, "CLE" = data_CLE_19, "SPRYSEC" = data_sprysec_19,"1106"=data_1106_19,"GLAND6"=data_GLAND6_19),
   Get_Number_clustered) %>% melt
 
 plt.22 <- ggplot(data_all22, aes(x = Var2, y = value)) +
-  geom_col(aes(fill=Var1), position = 'stack') +ggtitle("Gr22")
+  geom_col(aes(fill=Var1), position = 'stack') +ggtitle("Gr22") + theme_light()
 plt.19 <- ggplot(data_all19, aes(x = Var2, y = value)) +
-  geom_col(aes(fill=Var1), position = 'stack') + ggtitle("Gr19")
+  geom_col(aes(fill=Var1), position = 'stack') + ggtitle("Gr19") + theme_light()
 
 
 gridExtra::grid.arrange(plt.19, plt.22, ncol = 1)
 ###########################################
 
-Plot_figure(data_CLE_22) 
+Plot_figure(data_1106_19) 
 
-
+chrom.sizes = read.table("~/tools/scripts/gene_families/Gr_22.sizes", row.names = 1)
 
 
