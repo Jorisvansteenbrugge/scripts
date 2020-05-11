@@ -9,13 +9,13 @@ library(reshape2)
 Add_family_col <- function(data, fam.name){
     family <- rep(fam.name, nrow(data))
     
-    return(cbind(data, family))
+    return(cbind(data, family, stringsAsFactors =F))
 }
 
 Add_family_group <- function(data, group.name){
     group <- rep(group.name, nrow(data))
     
-    return(cbind(data, group))
+    return(cbind(data, group, stringsAsFactors =F))
 }
     
 Add_pop_col <- function(data, pop.name){
@@ -200,9 +200,18 @@ plt.19 <- ggplot(data_all19, aes(x = Var2, y = value)) +
 
 gridExtra::grid.arrange(plt.19, plt.22, ncol = 1)
 ###########################################
+setwd('/home/joris/tools/scripts/gene_families/')
+source('Plot_gene_families.R')
 
-Plot_figure(data_1106_19) 
+chrom.sizes.22 = read.table("Gr_22.sizes", row.names = 1)
+chrom.sizes.19 = read.table("Gr_19.sizes", row.names = 1)
+Plot_family_overview(data_1106_19, chrom.sizes.19, title = "G. rostochiensis L19 1106")
+Plot_family_overview(data_1106_22, chrom.sizes.22, title = "G. rostochiensis L22 1106")
 
-chrom.sizes = read.table("~/tools/scripts/gene_families/Gr_22.sizes", row.names = 1)
+Plot_family_overview(data_GLAND6_19, chrom.sizes.19, title = "G. rostochiensis L19 4D06")
+Plot_family_overview(data_GLAND6_22, chrom.sizes.22, title = "G. rostochiensis L22 4D06")
+
+Plot_family_overview(data_sprysec_19, chrom.sizes.19, title = "G. rostochiensis L19 SPRYSEC")
+Plot_family_overview(data_sprysec_22, chrom.sizes.22, title = "G. rostochiensis L22 SPRYSEC")
 
 
