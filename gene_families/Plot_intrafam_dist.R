@@ -6,130 +6,8 @@ library(magrittr)
 library(ggplot2)
 library(reshape2)
 
-Add_family_col <- function(data, fam.name){
-    family <- rep(fam.name, nrow(data))
-    
-    return(cbind(data, family, stringsAsFactors =F))
-}
-
-Add_family_group <- function(data, group.name){
-    group <- rep(group.name, nrow(data))
-    
-    return(cbind(data, group, stringsAsFactors =F))
-}
-    
-Add_pop_col <- function(data, pop.name){
-  Pop <- rep(pop.name, nrow(data))
-  return(cbind(data, Pop))
-}
-
-Get_center_pos_col <- function(data){
-    centers <- apply(data, 1, function(row){
-        start    <- row['start'] %>% as.numeric
-        end      <- row['end']   %>% as.numeric
-        len.half <- (end - start) / 2
-        
-        return(start + len.half)
-        
-    })
-    return(cbind(data, centers))
-}
-
-Plot_figure <- function(data){
-  ggplot(data, aes(x = centers, y = c(0), color = family)) +
-    geom_point() +
-    facet_wrap(~chrom) +
-    theme_bw() + theme(axis.title.y=element_blank(),
-                       axis.text.y = element_blank(),
-                       axis.ticks.y=element_blank())
-  
-}
-
-Import_table <- function(loaded_data, file, fam_name, group_name, Pop){
-
-    data <- read.table(file, stringsAsFactors = F)
-    colnames(data) <- c("chrom","start","end","transcript","score",'strand')
-    
-    data %<>% Add_family_col(fam.name = fam_name)
-    data %<>% Add_family_group(group.name = group_name)
-    data %<>% Add_pop_col(pop.name = Pop)
-    data %<>% Get_center_pos_col()
-    
-    
-    if(is.null(loaded_data)){
-      return(data) 
-    } else {
-      return(rbind(loaded_data, data))
-    }
-    
-    }
 
 
-Get_Number_clustered <- function(data, cluster_threshold = 4, dist_treshold = 500000){
-  clustered.grand_total <- 0
-  
-  for (chrom in unique(data$chrom)){
-    subset_chrom <- data[which(data$chrom == chrom),]
-    rownames(subset_chrom) <- subset_chrom$transcript
-    
-    distance <- subset_chrom$centers %>% dist %>% as.matrix
-    total.clustered <- sapply(1:ncol(distance), function(i){
-      col_vals <- distance[,i]
-      col_vals.clustered <- col_vals[which(col_vals <= dist_treshold)]
-      if(length(col_vals.clustered) > cluster_threshold){
-        return(1)
-      } else{
-        return(0)
-      }
-      
-    }) %>% sum
-    
-    clustered.grand_total <- clustered.grand_total + total.clustered
-    
-  }
-
-  #clustered_chrom.names  <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
-  #clustered_gene.number  <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
-  #unclusered_gene.number <- nrow(data) - clustered_gene.number
-
-  unclustered_gene.number <- nrow(data) - clustered.grand_total
-  
-  return(c("clustered_gene.number" =clustered.grand_total, "unclustered_gene.number"=unclustered_gene.number))
-
-}
-
-# Get_Subset_Clustered <- function(data, cluster_threshold = 4, dist_treshold = 500000){
-#   clustered.grand_total <- 0
-#   
-#   for (chrom in unique(data$chrom)){
-#     subset_chrom <- data[which(data$chrom == chrom),]
-#     rownames(subset_chrom) <- subset_chrom$transcript
-#     
-#     distance <- subset_chrom$centers %>% dist %>% as.matrix
-#     total.clustered <- sapply(1:ncol(distance), function(i){
-#       col_vals <- distance[,i]
-#       col_vals.clustered <- col_vals[which(col_vals <= dist_treshold)]
-#       if(length(col_vals.clustered) > cluster_threshold){
-#         return(1)
-#       } else{
-#         return(0)
-#       }
-#       
-#     }) %>% sum
-#     
-#     clustered.grand_total <- clustered.grand_total + total.clustered
-#     
-#   }
-#   
-#   #clustered_chrom.names  <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
-#   #clustered_gene.number  <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
-#   #unclusered_gene.number <- nrow(data) - clustered_gene.number
-#   
-#   unclustered_gene.number <- nrow(data) - clustered.grand_total
-#   
-#   return(c("clustered_gene.number" =clustered.grand_total, "unclustered_gene.number"=unclustered_gene.number))
-#   
-# }
 
 #####################################
 data_GH5_19 <- NULL
@@ -193,12 +71,20 @@ data_all19 <- sapply(list(
   Get_Number_clustered) %>% melt
 
 plt.22 <- ggplot(data_all22, aes(x = Var2, y = value)) +
-  geom_col(aes(fill=Var1), position = 'stack') +ggtitle("Gr22") + theme_light()
+  geom_col(aes(fill=Var1), position = 'stack') + theme_light() +
+  ylab("Number of Genes") + theme(axis.title.x = element_blank()) +
+  ggtitle("G. rostochiensis Line 22")
+  
+
 plt.19 <- ggplot(data_all19, aes(x = Var2, y = value)) +
-  geom_col(aes(fill=Var1), position = 'stack') + ggtitle("Gr19") + theme_light()
+  geom_col(aes(fill=Var1), position = 'stack')  + theme_light() +
+  scale_y_continuous( limits = c(0, 100) ) +
+  ylab("Number of Genes") + theme(axis.title.x = element_blank()) +
+  ggtitle("G. rostochiensis Line 19")
 
 
-gridExtra::grid.arrange(plt.19, plt.22, ncol = 1)
+gridExtra::grid.arrange(plt.19, plt.22, ncol = 2)
+
 ###########################################
 setwd('/home/joris/tools/scripts/gene_families/')
 source('Plot_gene_families.R')
@@ -211,11 +97,7 @@ Plot_family_overview(data_1106_22, chrom.sizes.22, title = "G. rostochiensis L22
 Plot_family_overview(data_GLAND6_19, chrom.sizes.19, title = "G. rostochiensis L19 4D06")
 Plot_family_overview(data_GLAND6_22, chrom.sizes.22, title = "G. rostochiensis L22 4D06")
 
-par(mar =c(0,0,0,0))
 Plot_family_overview(data_sprysec_19, chrom.sizes.19, title = "G. rostochiensis L19 SPRYSEC")
-
-
-svg("~/Figures/Fam_distance_figures/Gr22_SPRYSEC_organisation.svg")
 Plot_family_overview(data_sprysec_22, chrom.sizes.22, title = "G. rostochiensis L22 SPRYSEC")
-dev.off()
+
 
