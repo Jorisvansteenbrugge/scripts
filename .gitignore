@@ -5,3 +5,5 @@
 *.fa
 *.2bit
 *.sizes
+.RData
+.RHistory
