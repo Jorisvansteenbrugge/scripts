@@ -61,7 +61,10 @@ def parse_mauve_backbone(backbone_file, start_col):
 
 		for line in bb:
 			line = line.strip().split('\t')
-			region = (line[start_col], line[(start_col+1)])
+			try:
+				region = (line[start_col], line[(start_col+1)])
+			except IndexError:
+				print(line)
 			region = [abs(int(pos)) for pos in region]
 
 			yield region
@@ -73,9 +76,13 @@ region_dict = make_region_lookup_table(scaffolds_dict.values())
 
 
 for bb_region in parse_mauve_backbone(backbone, bb_start_col):
-	
-	region_scaffold = region_dict[bb_region[0]]
-	scaffold = scaffolds_dict[region_scaffold]
 
-	print(scaffold.get_real_scaffold_coordinate(bb_region))
+    if bb_region[0] != 0:	
+    	region_scaffold = region_dict[bb_region[0]]
+    	scaffold = scaffolds_dict[region_scaffold]
+
+    	print(scaffold.get_real_scaffold_coordinate(bb_region))
+    else:
+        print("NA\t0\t0")
+
 

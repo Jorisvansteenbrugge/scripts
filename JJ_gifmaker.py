@@ -1,4 +1,4 @@
-import imageioimport imageio
+import imageio
 from os import path
 from glob import glob
 

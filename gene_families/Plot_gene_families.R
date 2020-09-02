@@ -63,7 +63,7 @@ Import_table <- function(loaded_data, file, fam_name, group_name, Pop){
 }
 
 
-Get_Number_clustered <- function(data, cluster_threshold = 4, dist_treshold = 500000){
+Get_Number_clustered <- function(data, cluster_threshold = 3, dist_treshold = 500000){
   clustered.grand_total <- 0
   
   for (chrom in unique(data$chrom)){
@@ -79,21 +79,21 @@ Get_Number_clustered <- function(data, cluster_threshold = 4, dist_treshold = 50
       } else{
         return(0)
       }
-      
+
     }) %>% sum
-    
+
     clustered.grand_total <- clustered.grand_total + total.clustered
-    
+
   }
-  
+
   #clustered_chrom.names  <- data$chrom %>% table %>% `>=` (cluster_threshold) %>% which %>% names
   #clustered_gene.number  <- data[which(data$chrom %in% clustered_chrom.names),] %>% nrow
   #unclusered_gene.number <- nrow(data) - clustered_gene.number
-  
+
   unclustered_gene.number <- nrow(data) - clustered.grand_total
-  
+
   return(c("clustered_gene.number" =clustered.grand_total, "unclustered_gene.number"=unclustered_gene.number))
-  
+
 }
 
 get_number <- function(num){

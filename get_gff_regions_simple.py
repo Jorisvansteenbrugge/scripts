@@ -3,7 +3,7 @@
 from sys import argv, exit
 
 
-if len(argv) < 2:
+if len(argv) <= 2:
     exit("usage: ./get_gff_regions_simple.py <regions.gff> {id1, id2, id3, ..., idn}")
 
 
